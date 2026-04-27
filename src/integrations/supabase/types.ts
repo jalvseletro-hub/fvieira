@@ -14,7 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      company_settings: {
+        Row: {
+          address: string | null
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          logo_url: string | null
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      month_records: {
+        Row: {
+          client: Json | null
+          costs: Json
+          created_at: string
+          id: string
+          month: number
+          services: Json
+          updated_at: string
+          user_id: string
+          vehicle_id: string
+          year: number
+        }
+        Insert: {
+          client?: Json | null
+          costs?: Json
+          created_at?: string
+          id?: string
+          month: number
+          services?: Json
+          updated_at?: string
+          user_id: string
+          vehicle_id: string
+          year: number
+        }
+        Update: {
+          client?: Json | null
+          costs?: Json
+          created_at?: string
+          id?: string
+          month?: number
+          services?: Json
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "month_records_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          photo_url: string | null
+          pin: string | null
+          plate: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          photo_url?: string | null
+          pin?: string | null
+          plate?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          pin?: string | null
+          plate?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
