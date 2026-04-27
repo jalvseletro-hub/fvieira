@@ -224,7 +224,7 @@ export default function App() {
     if (!user) return;
 
     const unsubVehicles = onSnapshot(collection(db, 'vehicles'), (snapshot) => {
-      const data = snapshot.docs.map(doc => doc.data() as Vehicle);
+      const data = snapshot.docs.map((doc: any) => doc.data() as Vehicle);
       setVehicles(data);
       
       // Lock selection for drivers
@@ -238,7 +238,7 @@ export default function App() {
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'vehicles', false));
 
     const unsubRecords = onSnapshot(collection(db, 'records'), (snapshot) => {
-      const data = snapshot.docs.map(doc => doc.data() as MonthRecord);
+      const data = snapshot.docs.map((doc: any) => doc.data() as MonthRecord);
       setRecords(data);
       setDataLoaded(prev => ({ ...prev, records: true }));
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'records', false));
@@ -330,7 +330,7 @@ export default function App() {
   };
 
   const handlePlateAccess = () => {
-    const v = vehicles.find(v => v.plate.toLowerCase() === plateInput.trim().toLowerCase());
+    const v = vehicles.find(v => (v.plate || '').toLowerCase() === plateInput.trim().toLowerCase());
     if (v) {
       setCurrentUserVehicleId(v.id);
       setUserRole('driver');
@@ -2836,8 +2836,8 @@ function NewVehicleModal({ vehicle, onClose, onSubmit }: {
 
 function InputGroup({ label, value, onChange, step = 1 }: { 
   label: string; 
-  value: number; 
-  onChange: (v: number) => void;
+  value: number | string; 
+  onChange: (v: any) => void;
   step?: number;
 }) {
   const [internalValue, setInternalValue] = useState(value.toString());
