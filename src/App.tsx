@@ -189,6 +189,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'vehicles' | 'settings'>('dashboard');
   const [userRole, setUserRole] = useState<'none' | 'admin' | 'driver'>('none');
   const [currentUserVehicleId, setCurrentUserVehicleId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
     return localStorage.getItem('ms_current_user_vehicle_id');
   });
   const [plateInput, setPlateInput] = useState('');
@@ -207,7 +208,9 @@ export default function App() {
       setUser(user);
       setIsAuthReady(true);
       
-      if (user && user.email?.toLowerCase() === 'jalvs.eletro@gmail.com') {
+      if (user) {
+        // Owner-account model: every authenticated user is admin of their own data (enforced by RLS).
+        // Drivers can still access via the plate flow before signing in.
         setUserRole('admin');
       } else if (currentUserVehicleId) {
         setUserRole('driver');
@@ -304,6 +307,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (currentUserVehicleId) {
       localStorage.setItem('ms_current_user_vehicle_id', currentUserVehicleId);
       setSelectedVehicleId(currentUserVehicleId);
