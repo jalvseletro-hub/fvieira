@@ -2282,8 +2282,8 @@ function RecordModal({ vehicleId, vehicles, record, onClose, onSubmit }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl text-slate-900">
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl text-slate-900 my-4">
         <div className="p-8">
           <div className="flex items-center justify-between mb-8">
             <div>
