@@ -1,6 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 
-import appCss from "../styles.css?url";
+import "../styles.css";
 
 function NotFoundComponent() {
   return (
@@ -42,12 +42,7 @@ export const Route = createRootRoute({
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5a04bfc8-d1a4-4195-bb00-17416478101c/id-preview-ba6a1120--8294a9a3-b6a1-4a02-a494-3a2a10abceb2.lovable.app-1777307969565.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5a04bfc8-d1a4-4195-bb00-17416478101c/id-preview-ba6a1120--8294a9a3-b6a1-4a02-a494-3a2a10abceb2.lovable.app-1777307969565.png" },
     ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
+    links: [],
   }),
   shellComponent: RootShell,
   component: RootComponent,
