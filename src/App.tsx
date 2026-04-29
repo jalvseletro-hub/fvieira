@@ -321,7 +321,7 @@ export default function App() {
     } else {
       localStorage.removeItem('ms_current_user_vehicle_id');
     }
-  }, [];
+  }, [currentUserVehicleId]);
 
   const handleUpdateSettings = async (updatedSettings: CompanySettings) => {
     try {
