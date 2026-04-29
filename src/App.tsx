@@ -90,7 +90,7 @@ const INITIAL_RECORDS: MonthRecord[] = [];
 
 const createId = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return createId();
+    return crypto.randomUUID();
   }
   return `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 };
