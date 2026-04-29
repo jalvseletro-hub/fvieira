@@ -70,6 +70,7 @@ import {
   OperationType,
   User
 } from './lib/firebase';
+import { addDriverService, getDriverWorkspace } from './server/driver-access.functions';
 
 // Pre-populated data
 const DEFAULT_DIESEL_PRICE = 6.50;
@@ -86,6 +87,13 @@ const INITIAL_VEHICLE_ID = 'v1';
 const INITIAL_VEHICLES: Vehicle[] = [];
 const INITIAL_SERVICES: ServiceEntry[] = [];
 const INITIAL_RECORDS: MonthRecord[] = [];
+
+const createId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return createId();
+  }
+  return `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
 
 const PRICES = {
   casada: 800,
@@ -194,6 +202,7 @@ export default function App() {
   });
   const [plateInput, setPlateInput] = useState('');
   const [accessError, setAccessError] = useState('');
+  const [isDriverAccessLoading, setIsDriverAccessLoading] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>(INITIAL_VEHICLE_ID);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [showRecordModal, setShowRecordModal] = useState(false);
@@ -212,14 +221,12 @@ export default function App() {
         // Owner-account model: every authenticated user is admin of their own data (enforced by RLS).
         // Drivers can still access via the plate flow before signing in.
         setUserRole('admin');
-      } else if (currentUserVehicleId) {
-        setUserRole('driver');
       } else {
         setUserRole('none');
       }
     });
     return () => unsubscribe();
-  }, [currentUserVehicleId]);
+  }, []);
 
   const isAdmin = userRole === 'admin';
   const isDriver = userRole === 'driver';
@@ -314,7 +321,7 @@ export default function App() {
     } else {
       localStorage.removeItem('ms_current_user_vehicle_id');
     }
-  }, [currentUserVehicleId]);
+  }, [];
 
   const handleUpdateSettings = async (updatedSettings: CompanySettings) => {
     try {
@@ -333,15 +340,41 @@ export default function App() {
     }
   };
 
-  const handlePlateAccess = () => {
-    const v = vehicles.find(v => (v.plate || '').toLowerCase() === plateInput.trim().toLowerCase());
-    if (v) {
-      setCurrentUserVehicleId(v.id);
+  const handlePlateAccess = async () => {
+    const plate = plateInput.trim();
+    if (!plate) {
+      setAccessError('Digite a placa do veículo.');
+      return;
+    }
+
+    setIsDriverAccessLoading(true);
+    setAccessError('');
+
+    try {
+      const localVehicle = vehicles.find(v => (v.plate || '').toLowerCase() === plate.toLowerCase());
+
+      if (localVehicle && user) {
+        setCurrentUserVehicleId(localVehicle.id);
+        setSelectedVehicleId(localVehicle.id);
+        setUserRole('driver');
+        setActiveTab('dashboard');
+        return;
+      }
+
+      const workspace = await getDriverWorkspace({ data: { plate } });
+      setVehicles([workspace.vehicle]);
+      setRecords(workspace.records);
+      setSettings(workspace.settings);
+      setCurrentUserVehicleId(workspace.vehicle.id);
+      setSelectedVehicleId(workspace.vehicle.id);
+      setSelectedRecordId(null);
+      setDataLoaded({ vehicles: true, records: true, settings: true });
       setUserRole('driver');
-      setAccessError('');
       setActiveTab('dashboard');
-    } else {
-      setAccessError('Veículo não encontrado. Verifique a placa.');
+    } catch (error: any) {
+      setAccessError(error?.message || 'Veículo não encontrado. Verifique a placa.');
+    } finally {
+      setIsDriverAccessLoading(false);
     }
   };
 
@@ -738,7 +771,7 @@ export default function App() {
   };
 
   const handleAddVehicle = async (name: string, plate: string, photoUrl?: string, pin?: string) => {
-    const id = crypto.randomUUID();
+    const id = createId();
     const newVehicle: Vehicle = {
       id,
       name,
@@ -756,7 +789,7 @@ export default function App() {
   };
 
   const handleAddRecord = async (record: Omit<MonthRecord, 'id'>) => {
-    const id = crypto.randomUUID();
+    const id = createId();
     const newRecord: MonthRecord = {
       ...record,
       id
@@ -781,6 +814,20 @@ export default function App() {
   };
 
   const handleQuickAddService = async (service: Omit<ServiceEntry, 'id'>) => {
+    if (isDriver) {
+      try {
+        const savedRecord = await addDriverService({ data: { vehicleId: selectedVehicleId, service } });
+        setRecords(prev => {
+          const otherRecords = prev.filter(r => r.id !== savedRecord.id);
+          return [...otherRecords, savedRecord];
+        });
+        setSelectedRecordId(savedRecord.id);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, 'records');
+      }
+      return;
+    }
+
     const serviceDate = parseISO(service.date);
     const month = serviceDate.getMonth();
     const year = serviceDate.getFullYear();
@@ -793,7 +840,7 @@ export default function App() {
 
     try {
       if (existingRecord) {
-        const updatedServices = [...existingRecord.services, { ...service, id: crypto.randomUUID() }].sort((a, b) => a.date.localeCompare(b.date));
+        const updatedServices = [...existingRecord.services, { ...service, id: createId() }].sort((a, b) => a.date.localeCompare(b.date));
         const updatedRecord = {
           ...existingRecord,
           services: updatedServices,
@@ -808,13 +855,13 @@ export default function App() {
         updatedRecord.costs.driverDays = nonTripDates.size;
         await setDoc(doc(db, 'records', existingRecord.id), cleanObject(updatedRecord));
       } else {
-        const id = crypto.randomUUID();
+        const id = createId();
         const newRecord: MonthRecord = {
           id,
           vehicleId: selectedVehicleId,
           month,
           year,
-          services: [{ ...service, id: crypto.randomUUID() }],
+          services: [{ ...service, id: createId() }],
           costs: {
             dieselLiters: (service.dieselLiters || 0),
             dieselPrice: DEFAULT_DIESEL_PRICE,
@@ -881,25 +928,50 @@ export default function App() {
     );
   }
 
-  if (!user) {
+  if (!user && userRole !== 'driver') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans text-white">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans">
         <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center text-slate-900">
           <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-xl shadow-indigo-500/20">
             <Truck size={40} />
           </div>
           <h1 className="text-2xl font-bold mb-2">F.VIEIRA</h1>
           <p className="text-slate-500 mb-8">Gestão de Frota</p>
-          
-          <button
-            onClick={handleLogin}
-            className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 transition-all font-bold text-white shadow-lg shadow-indigo-200"
-          >
-            <LogIn size={20} />
-            Entrar com Google para Começar
-          </button>
-          
-          <p className="mt-6 text-[10px] text-slate-400 uppercase tracking-widest font-bold">Acesso Restrito</p>
+
+          <div className="space-y-4 text-left">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Placa do Veículo</label>
+            <input
+              type="text"
+              placeholder="ABC-1234"
+              value={plateInput}
+              onChange={(e) => setPlateInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handlePlateAccess();
+              }}
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-xl font-black text-slate-900 tracking-wider focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-slate-300"
+            />
+            {accessError && <p className="text-rose-500 text-xs font-bold px-1">{accessError}</p>}
+            <button
+              type="button"
+              onClick={handlePlateAccess}
+              disabled={isDriverAccessLoading}
+              className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {isDriverAccessLoading ? 'Acessando...' : 'Acessar Painel de Lançamento'}
+              <ChevronRight size={20} />
+            </button>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={handleLogin}
+              className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-slate-100 hover:bg-slate-200 transition-all font-bold text-slate-700"
+            >
+              <LogIn size={20} />
+              Entrar como administrador
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -933,15 +1005,18 @@ export default function App() {
             </div>
 
             <button 
+              type="button"
               onClick={handlePlateAccess}
+              disabled={isDriverAccessLoading}
               className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
             >
-              Acessar Painel de Lançamento
+              {isDriverAccessLoading ? 'Acessando...' : 'Acessar Painel de Lançamento'}
               <ChevronRight size={20} />
             </button>
 
             <div className="pt-4 border-t border-slate-100">
               <button 
+                type="button"
                 onClick={handleLogout}
                 className="text-slate-400 text-xs font-bold hover:text-rose-500 transition-colors"
               >
@@ -2204,7 +2279,7 @@ function RecordModal({ vehicleId, vehicles, record, onClose, onSubmit }: {
     const isConstellation = vehicles.find(v => v.id === record?.vehicleId)?.name.includes('Constellation 30280');
 
     const newService: ServiceEntry = {
-      id: crypto.randomUUID(),
+      id: createId(),
       date: newServiceDate,
       type: newServiceType,
       quantity: totalQty,
