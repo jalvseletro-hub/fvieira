@@ -831,6 +831,10 @@ export default function App() {
   };
 
   const handleQuickAddService = async (service: Omit<ServiceEntry, 'id'>) => {
+    if (!selectedVehicleId) {
+      alert('Selecione ou cadastre um veículo antes de salvar.');
+      return;
+    }
     if (isDriver) {
       try {
         const savedRecord = await addDriverService({ data: { vehicleId: selectedVehicleId, service } });
