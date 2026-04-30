@@ -26,6 +26,15 @@ export function handleFirestoreError(
 ) {
   // eslint-disable-next-line no-console
   console.error("DB Error:", op, path, error);
+  // Show a visible message so mobile users know why the action failed
+  if (shouldThrow && typeof window !== "undefined") {
+    const message = error instanceof Error
+      ? error.message
+      : (typeof error === "object" && error && "message" in error
+          ? String((error as any).message)
+          : String(error));
+    try { window.alert(`Não foi possível salvar: ${message}`); } catch {}
+  }
   if (shouldThrow) throw error instanceof Error ? error : new Error(String(error));
 }
 
