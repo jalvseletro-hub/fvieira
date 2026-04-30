@@ -1661,6 +1661,21 @@ export default function App() {
                         >
                           <Edit2 size={16} />
                         </button>
+                        {isAdmin && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteVehicle(v.id);
+                            }}
+                            className={cn(
+                              "p-1.5 rounded-lg transition-colors",
+                              selectedVehicleId === v.id ? "hover:bg-white/10 text-white" : "hover:bg-red-50 text-red-500"
+                            )}
+                            aria-label="Excluir veículo"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </div>
                     <h4 className="font-bold text-lg">{v.name}</h4>
