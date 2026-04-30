@@ -510,13 +510,40 @@ export default function App() {
   }));
 
   const handleUpdateVehicle = async (id: string, name: string, plate: string, photoUrl?: string, pin?: string) => {
-    const updatedVehicle = { id, name, plate, photoUrl, pin };
+    const updatedVehicle: Vehicle = { id, name, plate, photoUrl, pin };
     try {
       await setDoc(doc(db, 'vehicles', id), cleanObject(updatedVehicle));
+      setVehicles(prev => prev.map(v => (v.id === id ? updatedVehicle : v)));
       setEditingVehicleId(null);
       setShowNewVehicleModal(false);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `vehicles/${id}`);
+    }
+  };
+
+  const handleDeleteVehicle = async (id: string) => {
+    const vehicle = vehicles.find(v => v.id === id);
+    if (!vehicle) return;
+    const linkedRecords = records.filter(r => r.vehicleId === id);
+    const confirmMsg = linkedRecords.length > 0
+      ? `Tem certeza que deseja excluir o veículo "${vehicle.name}"?\n\nIsso também removerá ${linkedRecords.length} registro(s) mensal(is) vinculado(s). Esta ação não pode ser desfeita.`
+      : `Tem certeza que deseja excluir o veículo "${vehicle.name}"? Esta ação não pode ser desfeita.`;
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      for (const r of linkedRecords) {
+        await deleteDoc(doc(db, 'records', r.id));
+      }
+      await deleteDoc(doc(db, 'vehicles', id));
+      setRecords(prev => prev.filter(r => r.vehicleId !== id));
+      setVehicles(prev => {
+        const next = prev.filter(v => v.id !== id);
+        if (selectedVehicleId === id) {
+          setSelectedVehicleId(next[0]?.id ?? '');
+        }
+        return next;
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `vehicles/${id}`);
     }
   };
 
