@@ -83,16 +83,33 @@ const INITIAL_SETTINGS: CompanySettings = {
 };
 
 // Pre-populated data
-const INITIAL_VEHICLE_ID = 'v1';
+const INITIAL_VEHICLE_ID = '';
 const INITIAL_VEHICLES: Vehicle[] = [];
 const INITIAL_SERVICES: ServiceEntry[] = [];
 const INITIAL_RECORDS: MonthRecord[] = [];
 
-const createId = () => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
+// UUID v4 generator with safe fallback for mobile browsers without crypto.randomUUID
+const createId = (): string => {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch {}
+  // RFC4122 v4 fallback using Math.random (works on every browser)
+  const hex = '0123456789abcdef';
+  let uuid = '';
+  for (let i = 0; i < 36; i++) {
+    if (i === 8 || i === 13 || i === 18 || i === 23) {
+      uuid += '-';
+    } else if (i === 14) {
+      uuid += '4';
+    } else if (i === 19) {
+      uuid += hex[(Math.random() * 4) | 0 | 8];
+    } else {
+      uuid += hex[(Math.random() * 16) | 0];
+    }
   }
-  return `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return uuid;
 };
 
 const PRICES = {
@@ -814,6 +831,10 @@ export default function App() {
   };
 
   const handleQuickAddService = async (service: Omit<ServiceEntry, 'id'>) => {
+    if (!selectedVehicleId) {
+      alert('Selecione ou cadastre um veículo antes de salvar.');
+      return;
+    }
     if (isDriver) {
       try {
         const savedRecord = await addDriverService({ data: { vehicleId: selectedVehicleId, service } });

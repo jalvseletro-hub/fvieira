@@ -173,18 +173,19 @@ export const addDriverService = createServerFn({ method: "POST" })
     };
     updatedRecord.costs = recalculateCosts(updatedRecord);
 
+    const upsertPayload: any = {
+      id: updatedRecord.id,
+      user_id: vehicleRow.user_id,
+      vehicle_id: updatedRecord.vehicleId,
+      month: updatedRecord.month,
+      year: updatedRecord.year,
+      services: updatedRecord.services as any,
+      costs: updatedRecord.costs as any,
+      client: (updatedRecord.client ?? null) as any,
+    };
     const { data: savedRows, error: saveError } = await supabaseAdmin
       .from("month_records")
-      .upsert({
-        id: updatedRecord.id,
-        user_id: vehicleRow.user_id,
-        vehicle_id: updatedRecord.vehicleId,
-        month: updatedRecord.month,
-        year: updatedRecord.year,
-        services: updatedRecord.services,
-        costs: updatedRecord.costs,
-        client: updatedRecord.client ?? null,
-      })
+      .upsert(upsertPayload)
       .select("*");
 
     if (saveError) throw saveError;
