@@ -825,6 +825,7 @@ export default function App() {
     };
     try {
       await setDoc(doc(db, 'vehicles', id), cleanObject(newVehicle));
+      setVehicles(prev => [...prev, newVehicle]);
       setSelectedVehicleId(newVehicle.id);
       setShowNewVehicleModal(false);
     } catch (error) {
@@ -833,6 +834,19 @@ export default function App() {
   };
 
   const handleAddRecord = async (record: Omit<MonthRecord, 'id'>) => {
+    const id = createId();
+    const newRecord: MonthRecord = {
+      ...record,
+      id
+    };
+    try {
+      await setDoc(doc(db, 'records', id), cleanObject(newRecord));
+      setRecords(prev => [...prev, newRecord]);
+      setShowRecordModal(false);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, `records/${id}`);
+    }
+  };
     const id = createId();
     const newRecord: MonthRecord = {
       ...record,
