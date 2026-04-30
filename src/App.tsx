@@ -847,23 +847,11 @@ export default function App() {
       handleFirestoreError(error, OperationType.CREATE, `records/${id}`);
     }
   };
-    const id = createId();
-    const newRecord: MonthRecord = {
-      ...record,
-      id
-    };
-    try {
-      await setDoc(doc(db, 'records', id), cleanObject(newRecord));
-      setShowRecordModal(false);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, `records/${id}`);
-    }
-  };
-
   const handleUpdateRecord = async (id: string, updatedData: Omit<MonthRecord, 'id'>) => {
-    const updatedRecord = { ...updatedData, id };
+    const updatedRecord: MonthRecord = { ...updatedData, id };
     try {
       await setDoc(doc(db, 'records', id), cleanObject(updatedRecord));
+      setRecords(prev => prev.map(r => (r.id === id ? updatedRecord : r)));
       setEditingRecordId(null);
       setShowRecordModal(false);
     } catch (error) {
