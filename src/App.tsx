@@ -1159,15 +1159,16 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans text-white">
         <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center text-slate-900">
-          <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-xl shadow-indigo-500/20">
+          <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-xl shadow-indigo-500/30 ring-1 ring-indigo-300/40">
             <Truck size={40} />
           </div>
-          <h1 className="text-2xl font-bold mb-2">F.VIEIRA</h1>
-          <p className="text-slate-500 mb-8">Gestão de Frota</p>
+          <h1 className="text-2xl font-bold mb-1">F.VIEIRA</h1>
+          <p className="text-slate-500 mb-2">Gestão de Frota</p>
+          <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-6">Versão 05/05/2026</p>
           
           <button
             onClick={handleLogin}
-            className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 transition-all font-bold text-white shadow-lg shadow-indigo-200"
+            className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 transition-all font-bold text-white shadow-lg shadow-indigo-200"
           >
             <LogIn size={20} />
             Entrar com Google para Começar
@@ -1233,17 +1234,17 @@ export default function App() {
       <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900">
       {/* Sidebar */}
       <aside className="w-full md:w-64 bg-white border-b md:border-r border-slate-200 flex flex-col shrink-0">
-        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-gradient-to-br from-indigo-50/60 via-white to-white">
+          <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center text-white overflow-hidden shadow-md shadow-indigo-200 ring-1 ring-indigo-300/40">
             {settings.logoUrl ? (
               <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
               <Truck size={24} />
             )}
           </div>
-          <div>
-            <h1 className="font-bold text-lg leading-tight">{settings.name}</h1>
-            <p className="text-xs text-slate-500">Gestão de Frotas</p>
+          <div className="min-w-0">
+            <h1 className="font-bold text-lg leading-tight tracking-tight">{settings.name}</h1>
+            <p className="text-[10px] text-indigo-600/80 font-bold uppercase tracking-widest">v. 05/05/2026</p>
           </div>
         </div>
 
