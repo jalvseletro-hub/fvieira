@@ -249,7 +249,7 @@ export default function App() {
     if (!user) return;
 
     const unsubVehicles = onSnapshot(collection(db, 'vehicles'), (snapshot) => {
-      const data = snapshot.docs.map(doc => doc.data() as Vehicle);
+      const data = snapshot.docs.map((doc: any) => doc.data() as Vehicle);
       setVehicles(data);
       
       // Select vehicle logically
@@ -259,7 +259,7 @@ export default function App() {
         
         // 2. If we have vehicles and the current ID is empty or not in the list, pick the first one
         if (data.length > 0) {
-          const exists = data.some(v => v.id === prevId);
+          const exists = data.some((v: Vehicle) => v.id === prevId);
           if (!prevId || prevId === 'v1' || !exists) {
             return data[0].id;
           }
@@ -272,7 +272,7 @@ export default function App() {
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'vehicles', false));
 
     const unsubRecords = onSnapshot(collection(db, 'records'), (snapshot) => {
-      const data = snapshot.docs.map(doc => doc.data() as MonthRecord);
+      const data = snapshot.docs.map((doc: any) => doc.data() as MonthRecord);
       setRecords(data);
       setDataLoaded(prev => ({ ...prev, records: true }));
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'records', false));
