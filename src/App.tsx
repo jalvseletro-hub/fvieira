@@ -1233,17 +1233,17 @@ export default function App() {
       <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900">
       {/* Sidebar */}
       <aside className="w-full md:w-64 bg-white border-b md:border-r border-slate-200 flex flex-col shrink-0">
-        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-gradient-to-br from-indigo-50/60 via-white to-white">
+          <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center text-white overflow-hidden shadow-md shadow-indigo-200 ring-1 ring-indigo-300/40">
             {settings.logoUrl ? (
               <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
               <Truck size={24} />
             )}
           </div>
-          <div>
-            <h1 className="font-bold text-lg leading-tight">{settings.name}</h1>
-            <p className="text-xs text-slate-500">Gestão de Frotas</p>
+          <div className="min-w-0">
+            <h1 className="font-bold text-lg leading-tight tracking-tight">{settings.name}</h1>
+            <p className="text-[10px] text-indigo-600/80 font-bold uppercase tracking-widest">v. 05/05/2026</p>
           </div>
         </div>
 
