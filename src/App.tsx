@@ -3257,10 +3257,11 @@ function NewVehicleModal({ vehicle, onClose, onSubmit }: {
 
 function InputGroup({ label, value, onChange, step = 1 }: { 
   label: string; 
-  value: number; 
-  onChange: (v: number) => void;
+  value: number | string; 
+  onChange: ((v: number) => void) | ((v: string) => void) | React.Dispatch<React.SetStateAction<string>> | React.Dispatch<React.SetStateAction<number>>;
   step?: number;
 }) {
+  const _onChange = onChange as (v: any) => void;
   const [internalValue, setInternalValue] = useState(value.toString());
 
   useEffect(() => {
