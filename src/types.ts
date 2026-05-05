@@ -1,4 +1,4 @@
-export type ServiceType = 'casada' | 'normal' | 'milho' | 'cimento' | 'boa_vista' | 'gas' | 'frete_avulso';
+export type ServiceType = 'casada' | 'normal' | 'milho' | 'cimento' | 'boa_vista' | 'gas' | 'frete_avulso' | 'aleatorio';
 
 export interface GasItem {
   id: string;
@@ -23,6 +23,7 @@ export interface ServiceEntry {
   overtimeHours?: number; // Added for quick overtime entry
   driverId?: 1 | 2; // For vehicles with two drivers
   agentCommission?: number; // Specific commission for 'milho' services
+  observation?: string; // Observação do motorista
 }
 
 export interface MonthlyCosts {
