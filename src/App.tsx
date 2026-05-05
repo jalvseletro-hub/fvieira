@@ -364,7 +364,7 @@ export default function App() {
   };
 
   const handlePlateAccess = () => {
-    const v = vehicles.find(v => v.plate.toLowerCase() === plateInput.trim().toLowerCase());
+    const v = vehicles.find(v => (v.plate || '').toLowerCase() === plateInput.trim().toLowerCase());
     if (v) {
       setCurrentUserVehicleId(v.id);
       setUserRole('driver');
@@ -1438,7 +1438,7 @@ export default function App() {
                   }}
                 />
                 {/* Stats Grid */}
-                {isAdmin && (
+                {isAdmin && stats && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatCard 
                       title="Receita Líquida" 
@@ -3265,8 +3265,8 @@ function InputGroup({ label, value, onChange, step = 1 }: {
   const [internalValue, setInternalValue] = useState(value.toString());
 
   useEffect(() => {
-    if (parseFloat(internalValue) !== value) {
-      setInternalValue(value.toString());
+    if (parseFloat(internalValue) !== Number(value)) {
+      setInternalValue(String(value));
     }
   }, [value]);
 
@@ -3281,10 +3281,12 @@ function InputGroup({ label, value, onChange, step = 1 }: {
           const newValue = e.target.value;
           setInternalValue(newValue);
           const parsed = parseFloat(newValue);
-          if (!isNaN(parsed)) {
-            onChange(parsed);
+          if (typeof value === 'string') {
+            _onChange(newValue);
+          } else if (!isNaN(parsed)) {
+            _onChange(parsed);
           } else if (newValue === '') {
-            onChange(0);
+            _onChange(0);
           }
         }}
         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900"
