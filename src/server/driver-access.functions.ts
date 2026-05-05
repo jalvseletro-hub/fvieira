@@ -7,7 +7,7 @@ const DEFAULT_DIESEL_PRICE = 6.5;
 
 const serviceSchema = z.object({
   date: z.string(),
-  type: z.enum(["casada", "normal", "milho", "cimento", "boa_vista", "gas", "frete_avulso"]),
+  type: z.enum(["casada", "normal", "milho", "cimento", "boa_vista", "gas", "frete_avulso", "aleatorio"]),
   quantity: z.number(),
   unitPrice: z.number().optional(),
   driverPayment: z.number().optional(),
