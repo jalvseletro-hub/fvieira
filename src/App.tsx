@@ -2087,6 +2087,42 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 backdrop-blur-xl border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center justify-around px-2 py-2 safe-bottom">
+          {[
+            { id: 'dashboard', label: isAdmin ? 'Painel' : 'Lançar', icon: LayoutDashboard, show: true },
+            { id: 'history', label: 'Histórico', icon: History, show: isAdmin },
+            { id: 'vehicles', label: 'Veículos', icon: Truck, show: isAdmin },
+            { id: 'settings', label: 'Ajustes', icon: Settings, show: isAdmin },
+          ].filter(i => i.show).map(item => {
+            const Icon = item.icon;
+            const active = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id as any)}
+                className={cn(
+                  "relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all duration-200",
+                  active ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                {active && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-indigo-600" />
+                )}
+                <div className={cn(
+                  "p-1.5 rounded-xl transition-all duration-200",
+                  active && "bg-indigo-50 scale-110"
+                )}>
+                  <Icon size={20} />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wide">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
       </div>
     </ErrorBoundary>
   );
