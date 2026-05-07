@@ -1231,7 +1231,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-50 flex flex-col md:flex-row font-sans text-slate-900">
       {/* Sidebar */}
       <aside className="w-full md:w-64 bg-white border-b md:border-r border-slate-200 flex flex-col shrink-0">
         <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-gradient-to-br from-indigo-50/60 via-white to-white">
@@ -1252,10 +1252,13 @@ export default function App() {
           <button 
             onClick={() => setActiveTab('dashboard')}
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-              activeTab === 'dashboard' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-600 hover:bg-slate-50"
+              "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+              activeTab === 'dashboard' 
+                ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
             )}
           >
+            {activeTab === 'dashboard' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
             <LayoutDashboard size={20} />
             {isAdmin ? 'Dashboard Fleet' : 'Lançamentos'}
           </button>
@@ -1264,30 +1267,39 @@ export default function App() {
               <button 
                 onClick={() => setActiveTab('history')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-                  activeTab === 'history' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-600 hover:bg-slate-50"
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'history' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
                 )}
               >
+                {activeTab === 'history' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
                 <History size={20} />
                 Histórico
               </button>
               <button 
                 onClick={() => setActiveTab('vehicles')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-                  activeTab === 'vehicles' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-600 hover:bg-slate-50"
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'vehicles' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
                 )}
               >
+                {activeTab === 'vehicles' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
                 <Truck size={20} />
                 Veículos
               </button>
               <button 
                 onClick={() => setActiveTab('settings')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-                  activeTab === 'settings' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-600 hover:bg-slate-50"
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'settings' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
                 )}
               >
+                {activeTab === 'settings' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
                 <Settings size={20} />
                 Configurações
               </button>
@@ -2094,15 +2106,33 @@ function StatCard({ title, value, icon, subtitle, color }: {
     amber: "bg-amber-50 text-amber-600",
   };
 
+  const gradients = {
+    emerald: "from-emerald-500/10 via-white to-white",
+    rose: "from-rose-500/10 via-white to-white",
+    indigo: "from-indigo-500/10 via-white to-white",
+    amber: "from-amber-500/10 via-white to-white",
+  };
+  const accent = {
+    emerald: "bg-emerald-500",
+    rose: "bg-rose-500",
+    indigo: "bg-indigo-500",
+    amber: "bg-amber-500",
+  };
+
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+    <div className={cn(
+      "relative bg-gradient-to-br p-6 rounded-2xl border border-slate-200 shadow-sm overflow-hidden",
+      "transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300 group",
+      gradients[color]
+    )}>
+      <div className={cn("absolute top-0 left-0 h-1 w-full opacity-80", accent[color])} />
       <div className="flex items-center justify-between mb-4">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", colors[color])}>
+        <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110", colors[color])}>
           {icon}
         </div>
       </div>
-      <h3 className="text-sm font-medium text-slate-500 mb-1">{title}</h3>
-      <p className="text-2xl font-bold text-slate-900 mb-1">{value}</p>
+      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{title}</h3>
+      <p className="text-2xl font-black text-slate-900 mb-1 tracking-tight">{value}</p>
       <p className="text-xs text-slate-400 flex items-center gap-1">
         <Info size={12} />
         {subtitle}
