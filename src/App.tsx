@@ -1409,29 +1409,7 @@ export default function App() {
                       <Truck size={18} />
                       Frota
                     </button>
-                    <button 
-                      onClick={() => {
-                        setEditingRecordId(activeRecord.id);
-                        setShowRecordModal(true);
-                      }}
-                      className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-                    >
-                      <Settings size={18} />
-                      Editar Mês
-                    </button>
                   </>
-                )}
-                {isAdmin && (
-                  <button 
-                    onClick={() => {
-                      setEditingRecordId(null);
-                      setShowRecordModal(true);
-                    }}
-                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm shadow-indigo-200"
-                  >
-                    <Plus size={20} />
-                    Novo Mês
-                  </button>
                 )}
               </div>
             </header>
