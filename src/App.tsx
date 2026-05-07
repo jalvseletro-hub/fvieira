@@ -1248,7 +1248,7 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="hidden md:block flex-1 p-4 space-y-1">
           <button 
             onClick={() => setActiveTab('dashboard')}
             className={cn(
