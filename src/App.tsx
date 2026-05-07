@@ -1409,29 +1409,7 @@ export default function App() {
                       <Truck size={18} />
                       Frota
                     </button>
-                    <button 
-                      onClick={() => {
-                        setEditingRecordId(activeRecord.id);
-                        setShowRecordModal(true);
-                      }}
-                      className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-                    >
-                      <Settings size={18} />
-                      Editar Mês
-                    </button>
                   </>
-                )}
-                {isAdmin && (
-                  <button 
-                    onClick={() => {
-                      setEditingRecordId(null);
-                      setShowRecordModal(true);
-                    }}
-                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm shadow-indigo-200"
-                  >
-                    <Plus size={20} />
-                    Novo Mês
-                  </button>
                 )}
               </div>
             </header>
@@ -1739,20 +1717,35 @@ export default function App() {
                 </div>
               </>
             ) : (
-              <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-                  <Calendar size={32} />
+              <div className="space-y-6">
+                <QuickAddService 
+                  vehicles={vehicles}
+                  selectedVehicleId={selectedVehicleId}
+                  onAdd={handleQuickAddService} 
+                  isDriver={isDriver}
+                  editingService={editingService?.service}
+                  onEdit={handleUpdateService}
+                  onCancel={() => {
+                    setEditingService(null);
+                  }}
+                />
+                <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+                    <Calendar size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Nenhum registro mensal</h3>
+                    <p className="text-slate-500 max-w-xs mx-auto">Use o lançamento rápido acima para criar o primeiro registro do mês automaticamente.</p>
+                  </div>
+                  {isAdmin && (
+                    <button 
+                      onClick={() => setShowRecordModal(true)}
+                      className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-medium"
+                    >
+                      Adicionar Primeiro Mês
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold">Nenhum registro mensal</h3>
-                  <p className="text-slate-500 max-w-xs mx-auto">Comece adicionando os dados do primeiro mês para visualizar o dashboard.</p>
-                </div>
-                <button 
-                  onClick={() => setShowRecordModal(true)}
-                  className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-medium"
-                >
-                  Adicionar Primeiro Mês
-                </button>
               </div>
             )}
           </div>
