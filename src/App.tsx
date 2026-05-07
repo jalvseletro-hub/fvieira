@@ -2094,15 +2094,33 @@ function StatCard({ title, value, icon, subtitle, color }: {
     amber: "bg-amber-50 text-amber-600",
   };
 
+  const gradients = {
+    emerald: "from-emerald-500/10 via-white to-white",
+    rose: "from-rose-500/10 via-white to-white",
+    indigo: "from-indigo-500/10 via-white to-white",
+    amber: "from-amber-500/10 via-white to-white",
+  };
+  const accent = {
+    emerald: "bg-emerald-500",
+    rose: "bg-rose-500",
+    indigo: "bg-indigo-500",
+    amber: "bg-amber-500",
+  };
+
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+    <div className={cn(
+      "relative bg-gradient-to-br p-6 rounded-2xl border border-slate-200 shadow-sm overflow-hidden",
+      "transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300 group",
+      gradients[color]
+    )}>
+      <div className={cn("absolute top-0 left-0 h-1 w-full opacity-80", accent[color])} />
       <div className="flex items-center justify-between mb-4">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", colors[color])}>
+        <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110", colors[color])}>
           {icon}
         </div>
       </div>
-      <h3 className="text-sm font-medium text-slate-500 mb-1">{title}</h3>
-      <p className="text-2xl font-bold text-slate-900 mb-1">{value}</p>
+      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{title}</h3>
+      <p className="text-2xl font-black text-slate-900 mb-1 tracking-tight">{value}</p>
       <p className="text-xs text-slate-400 flex items-center gap-1">
         <Info size={12} />
         {subtitle}
