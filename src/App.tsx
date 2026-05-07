@@ -1252,10 +1252,13 @@ export default function App() {
           <button 
             onClick={() => setActiveTab('dashboard')}
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-              activeTab === 'dashboard' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-600 hover:bg-slate-50"
+              "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+              activeTab === 'dashboard' 
+                ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
             )}
           >
+            {activeTab === 'dashboard' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
             <LayoutDashboard size={20} />
             {isAdmin ? 'Dashboard Fleet' : 'Lançamentos'}
           </button>
@@ -1264,30 +1267,39 @@ export default function App() {
               <button 
                 onClick={() => setActiveTab('history')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-                  activeTab === 'history' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-600 hover:bg-slate-50"
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'history' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
                 )}
               >
+                {activeTab === 'history' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
                 <History size={20} />
                 Histórico
               </button>
               <button 
                 onClick={() => setActiveTab('vehicles')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-                  activeTab === 'vehicles' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-600 hover:bg-slate-50"
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'vehicles' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
                 )}
               >
+                {activeTab === 'vehicles' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
                 <Truck size={20} />
                 Veículos
               </button>
               <button 
                 onClick={() => setActiveTab('settings')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-                  activeTab === 'settings' ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-600 hover:bg-slate-50"
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'settings' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
                 )}
               >
+                {activeTab === 'settings' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
                 <Settings size={20} />
                 Configurações
               </button>
