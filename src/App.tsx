@@ -1231,7 +1231,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-50 flex flex-col md:flex-row font-sans text-slate-900">
       {/* Sidebar */}
       <aside className="w-full md:w-64 bg-white border-b md:border-r border-slate-200 flex flex-col shrink-0">
         <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-gradient-to-br from-indigo-50/60 via-white to-white">
