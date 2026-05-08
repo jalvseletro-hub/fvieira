@@ -2882,14 +2882,11 @@ function RecordModal({ vehicleId, vehicles, record, onClose, onSubmit }: {
                 Custos do Mês
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <InputGroup label="Diesel (Litros)" value={dieselLiters} onChange={setDieselLiters} />
                 <InputGroup label="Preço Diesel (R$)" value={dieselPrice} onChange={setDieselPrice} step={0.01} />
-                <InputGroup label="Diárias Motorista" value={driverDays} onChange={setDriverDays} />
                 <InputGroup label="Valor Diária (R$)" value={driverDailyRate} onChange={setDriverDailyRate} />
                 <InputGroup label="Imposto (%)" value={taxRate} onChange={setTaxRate} />
                 <InputGroup label="Manutenção Peças (R$)" value={maintenanceParts} onChange={setMaintenanceParts} />
                 <InputGroup label="Manutenção Mão de Obra (R$)" value={maintenanceLabor} onChange={setMaintenanceLabor} />
-                <InputGroup label="Horas Extras" value={overtimeHours} onChange={setOvertimeHours} />
                 <InputGroup label="Valor Hora Extra (R$)" value={overtimeRate} onChange={setOvertimeRate} step={0.01} />
               </div>
             </div>
