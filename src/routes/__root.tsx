@@ -42,7 +42,12 @@ export const Route = createRootRoute({
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5a04bfc8-d1a4-4195-bb00-17416478101c/id-preview-ba6a1120--8294a9a3-b6a1-4a02-a494-3a2a10abceb2.lovable.app-1777307969565.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5a04bfc8-d1a4-4195-bb00-17416478101c/id-preview-ba6a1120--8294a9a3-b6a1-4a02-a494-3a2a10abceb2.lovable.app-1777307969565.png" },
     ],
-    links: [],
+    links: [
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
+      { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.json" },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
