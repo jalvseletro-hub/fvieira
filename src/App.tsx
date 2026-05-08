@@ -1389,7 +1389,8 @@ export default function App() {
                     className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
                     title="Editar/Criar Mês"
                   >
-                    ✏️ Mês
+                    <Pencil size={16} />
+                    <span>Mês</span>
                   </button>
                 )}
                 {activeRecord && isAdmin && (
