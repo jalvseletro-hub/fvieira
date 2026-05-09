@@ -1476,7 +1476,16 @@ export default function App() {
                 />
                 {/* Stats Grid */}
                 {isAdmin && stats && (
+                  <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatCard 
+                      title="Lucro Líquido" 
+                      value={formatCurrency(stats.profit)} 
+                      icon={<DollarSign size={22} />}
+                      subtitle={`Margem ${stats.margin.toFixed(1)}% • Resultado final do mês`}
+                      color="indigo"
+                      featured
+                    />
                     <StatCard 
                       title="Receita Líquida" 
                       value={formatCurrency(stats.revenue)} 
@@ -1493,21 +1502,15 @@ export default function App() {
                       subtitle={`${stats.margin.toFixed(1)}% de margem br.`}
                       color="rose"
                     />
-                    <StatCard 
-                      title="Lucro Líquido" 
-                      value={formatCurrency(stats.profit)} 
-                      icon={<DollarSign className="text-indigo-600" />}
-                      subtitle="Resultado final"
-                      color="indigo"
-                    />
-                    <StatCard 
-                      title="Mês de Referência" 
-                      value={activeRecord.year && activeRecord.month !== undefined ? format(new Date(activeRecord.year, activeRecord.month), 'MMMM yyyy', { locale: ptBR }) : 'N/A'} 
-                      icon={<Calendar className="text-amber-600" />}
-                      subtitle={selectedRecordId ? "Visualizando histórico" : "Mês atual"}
-                      color="amber"
-                    />
                   </div>
+                  <div className="text-xs text-slate-500 -mt-2 ml-1 flex items-center gap-1.5">
+                    <Calendar size={12} className="text-amber-600" />
+                    <span>
+                      {activeRecord.year && activeRecord.month !== undefined ? format(new Date(activeRecord.year, activeRecord.month), "MMMM 'de' yyyy", { locale: ptBR }) : 'N/A'}
+                      {selectedRecordId ? ' • histórico' : ' • mês atual'}
+                    </span>
+                  </div>
+                  </>
                 )}
 
                 {isAdmin && (
@@ -1661,8 +1664,20 @@ export default function App() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {activeRecord.services.map((s) => (
-                          <tr key={s.id} className="hover:bg-slate-50 transition-colors group">
+                        {activeRecord.services.map((s, idx) => {
+                          const prev = idx > 0 ? activeRecord.services[idx - 1] : null;
+                          const showDateHeader = !prev || prev.date !== s.date;
+                          const colSpan = isAdmin ? 5 : 4;
+                          return (
+                          <React.Fragment key={s.id}>
+                          {showDateHeader && s.date && (
+                            <tr className="bg-slate-50/60">
+                              <td colSpan={colSpan} className="px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                {format(parseISO(s.date), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                              </td>
+                            </tr>
+                          )}
+                          <tr className="hover:bg-slate-50 transition-colors group">
                             <td className="px-6 py-4 text-sm font-medium">
                               {s.date ? format(parseISO(s.date), 'dd/MM/yyyy') : 'N/A'}
                             </td>
@@ -1756,7 +1771,9 @@ export default function App() {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                          </React.Fragment>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -2167,12 +2184,13 @@ export default function App() {
   );
 }
 
-function StatCard({ title, value, icon, subtitle, color }: { 
+function StatCard({ title, value, icon, subtitle, color, featured }: { 
   title: string; 
   value: string; 
   icon: React.ReactNode; 
   subtitle: string;
   color: 'emerald' | 'rose' | 'indigo' | 'amber';
+  featured?: boolean;
 }) {
   const colors = {
     emerald: "bg-emerald-50 text-emerald-600",
@@ -2194,22 +2212,41 @@ function StatCard({ title, value, icon, subtitle, color }: {
     amber: "bg-amber-500",
   };
 
+  if (featured) {
+    return (
+      <div className="relative col-span-1 sm:col-span-2 lg:col-span-2 row-span-1 p-6 rounded-2xl shadow-lg overflow-hidden bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+        <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-white/5 blur-2xl" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-emerald-400/10 blur-2xl" />
+        <div className="relative flex items-start justify-between mb-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-200 mb-1">{title}</p>
+            <p className="text-xs text-indigo-200/70">{subtitle}</p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center text-white">
+            {icon}
+          </div>
+        </div>
+        <p className="relative text-4xl md:text-5xl font-black tracking-tight">{value}</p>
+      </div>
+    );
+  }
+
   return (
     <div className={cn(
-      "relative bg-gradient-to-br p-6 rounded-2xl border border-slate-200 shadow-sm overflow-hidden",
+      "relative bg-gradient-to-br p-5 rounded-2xl border border-slate-200 shadow-sm overflow-hidden",
       "transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300 group",
       gradients[color]
     )}>
       <div className={cn("absolute top-0 left-0 h-1 w-full opacity-80", accent[color])} />
-      <div className="flex items-center justify-between mb-4">
-        <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110", colors[color])}>
+      <div className="flex items-center justify-between mb-3">
+        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110", colors[color])}>
           {icon}
         </div>
       </div>
-      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{title}</h3>
-      <p className="text-2xl font-black text-slate-900 mb-1 tracking-tight">{value}</p>
-      <p className="text-xs text-slate-400 flex items-center gap-1">
-        <Info size={12} />
+      <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{title}</h3>
+      <p className="text-xl font-black text-slate-900 mb-1 tracking-tight">{value}</p>
+      <p className="text-[11px] text-slate-400 flex items-center gap-1">
+        <Info size={11} />
         {subtitle}
       </p>
     </div>
