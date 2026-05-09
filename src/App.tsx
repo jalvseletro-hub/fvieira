@@ -1402,30 +1402,59 @@ export default function App() {
                 )}
                 {activeRecord && isAdmin && (
                   <>
-                    <button 
-                      onClick={() => generateVehiclePDF(activeRecord)}
-                      className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-                      title="Baixar PDF Completo do Veículo"
-                    >
-                      <FileDown size={18} />
-                      PDF
-                    </button>
-                    <button 
-                      onClick={() => generateReceiptPDF(activeRecord)}
-                      className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-                      title="Baixar Recibo (Normal/Casada)"
-                    >
-                      <FileDown size={18} />
-                      Recibo
-                    </button>
-                    <button 
-                      onClick={() => generateFleetPDF(activeRecord.month, activeRecord.year)}
-                      className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-                      title="Baixar PDF da Frota"
-                    >
-                      <Truck size={18} />
-                      Frota
-                    </button>
+                    {/* Desktop: botões inline */}
+                    <div className="hidden md:flex items-center gap-2">
+                      <button
+                        onClick={() => generateVehiclePDF(activeRecord)}
+                        className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+                        title="Baixar PDF Completo do Veículo"
+                      >
+                        <FileDown size={18} />
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => generateReceiptPDF(activeRecord)}
+                        className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+                        title="Baixar Recibo (Normal/Casada)"
+                      >
+                        <FileDown size={18} />
+                        Recibo
+                      </button>
+                      <button
+                        onClick={() => generateFleetPDF(activeRecord.month, activeRecord.year)}
+                        className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+                        title="Baixar PDF da Frota"
+                      >
+                        <Truck size={18} />
+                        Frota
+                      </button>
+                    </div>
+
+                    {/* Mobile: menu compacto */}
+                    <div className="md:hidden">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+                            title="Mais ações"
+                          >
+                            <MoreHorizontal size={18} />
+                            <span>Mais</span>
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => generateVehiclePDF(activeRecord)}>
+                            <FileDown size={16} className="mr-2" /> PDF do Veículo
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => generateReceiptPDF(activeRecord)}>
+                            <FileDown size={16} className="mr-2" /> Recibo
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => generateFleetPDF(activeRecord.month, activeRecord.year)}>
+                            <Truck size={16} className="mr-2" /> PDF da Frota
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </>
                 )}
               </div>
