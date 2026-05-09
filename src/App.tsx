@@ -1476,6 +1476,7 @@ export default function App() {
                 />
                 {/* Stats Grid */}
                 {isAdmin && stats && (
+                  <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatCard 
                       title="Lucro Líquido" 
@@ -1502,15 +1503,14 @@ export default function App() {
                       color="rose"
                     />
                   </div>
-                  {isAdmin && stats && (
-                    <div className="text-xs text-slate-500 -mt-2 ml-1 flex items-center gap-1.5">
-                      <Calendar size={12} className="text-amber-600" />
-                      <span>
-                        {activeRecord.year && activeRecord.month !== undefined ? format(new Date(activeRecord.year, activeRecord.month), "MMMM 'de' yyyy", { locale: ptBR }) : 'N/A'}
-                        {selectedRecordId ? ' • histórico' : ' • mês atual'}
-                      </span>
-                    </div>
-                  )}
+                  <div className="text-xs text-slate-500 -mt-2 ml-1 flex items-center gap-1.5">
+                    <Calendar size={12} className="text-amber-600" />
+                    <span>
+                      {activeRecord.year && activeRecord.month !== undefined ? format(new Date(activeRecord.year, activeRecord.month), "MMMM 'de' yyyy", { locale: ptBR }) : 'N/A'}
+                      {selectedRecordId ? ' • histórico' : ' • mês atual'}
+                    </span>
+                  </div>
+                  </>
                 )}
 
                 {isAdmin && (
