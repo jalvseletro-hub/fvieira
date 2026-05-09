@@ -1478,6 +1478,14 @@ export default function App() {
                 {isAdmin && stats && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatCard 
+                      title="Lucro Líquido" 
+                      value={formatCurrency(stats.profit)} 
+                      icon={<DollarSign size={22} />}
+                      subtitle={`Margem ${stats.margin.toFixed(1)}% • Resultado final do mês`}
+                      color="indigo"
+                      featured
+                    />
+                    <StatCard 
                       title="Receita Líquida" 
                       value={formatCurrency(stats.revenue)} 
                       icon={<TrendingUp className="text-emerald-600" />}
@@ -1493,21 +1501,16 @@ export default function App() {
                       subtitle={`${stats.margin.toFixed(1)}% de margem br.`}
                       color="rose"
                     />
-                    <StatCard 
-                      title="Lucro Líquido" 
-                      value={formatCurrency(stats.profit)} 
-                      icon={<DollarSign className="text-indigo-600" />}
-                      subtitle="Resultado final"
-                      color="indigo"
-                    />
-                    <StatCard 
-                      title="Mês de Referência" 
-                      value={activeRecord.year && activeRecord.month !== undefined ? format(new Date(activeRecord.year, activeRecord.month), 'MMMM yyyy', { locale: ptBR }) : 'N/A'} 
-                      icon={<Calendar className="text-amber-600" />}
-                      subtitle={selectedRecordId ? "Visualizando histórico" : "Mês atual"}
-                      color="amber"
-                    />
                   </div>
+                  {isAdmin && stats && (
+                    <div className="text-xs text-slate-500 -mt-2 ml-1 flex items-center gap-1.5">
+                      <Calendar size={12} className="text-amber-600" />
+                      <span>
+                        {activeRecord.year && activeRecord.month !== undefined ? format(new Date(activeRecord.year, activeRecord.month), "MMMM 'de' yyyy", { locale: ptBR }) : 'N/A'}
+                        {selectedRecordId ? ' • histórico' : ' • mês atual'}
+                      </span>
+                    </div>
+                  )}
                 )}
 
                 {isAdmin && (
