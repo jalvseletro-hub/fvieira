@@ -20,8 +20,15 @@ import {
   LogOut,
   RefreshCw,
   Building2,
-  Pencil
+  Pencil,
+  MoreHorizontal
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { 
