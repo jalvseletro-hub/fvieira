@@ -2367,9 +2367,11 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [driverId, setDriverId] = useState<1 | 2>(1);
   const [agentCommission, setAgentCommission] = useState<string>('0');
   const [observation, setObservation] = useState<string>('');
+  const [showExtras, setShowExtras] = useState(false);
 
   useEffect(() => {
     if (editingService) {
+      setShowExtras(true);
       setDate(editingService.date);
       setType(editingService.type);
       setQty(editingService.quantity.toString());
@@ -2554,7 +2556,8 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 w-full border-t border-white/10 pt-3">
+      {showExtras && (
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 w-full border-t border-white/10 pt-3">
         {(type === 'boa_vista' || type === 'gas') && (
           <div className="flex flex-col">
             <label className="text-[10px] text-indigo-200 font-bold uppercase mb-1">Pagto Motorista</label>
@@ -2599,7 +2602,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all"
           />
         </div>
-        <div className="flex flex-col sm:col-span-1 md:col-span-2">
+        <div className="flex flex-col sm:col-span-2">
           <label className="text-[10px] text-indigo-200 font-bold uppercase mb-1">Observação</label>
           <input 
             type="text" 
@@ -2609,30 +2612,40 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all font-medium placeholder:text-white/30"
           />
         </div>
-        <div className="flex items-end gap-2">
-          {editingService && (
-            <button 
-              onClick={onCancel}
-              className="px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-sm h-[38px] rounded-xl transition-colors"
-            >
-              Cancelar
-            </button>
-          )}
+      </div>
+      )}
+
+      <div className="flex items-center gap-2 w-full border-t border-white/10 pt-3">
+        <button
+          type="button"
+          onClick={() => setShowExtras(v => !v)}
+          className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-indigo-200 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+        >
+          {showExtras ? '− Menos opções' : '+ Mais opções'}
+        </button>
+        <div className="flex-1" />
+        {editingService && (
           <button 
-            onClick={handleAdd}
-            className={cn(
-              "flex-1 md:w-auto font-bold text-sm h-[38px] px-6 rounded-xl transition-all flex items-center justify-center gap-2",
-              editingService ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20" : "bg-white text-indigo-900 hover:bg-indigo-50 transition-colors"
-            )}
+            onClick={onCancel}
+            className="px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-sm h-[38px] rounded-xl transition-colors"
           >
-            {editingService ? (
-              <>
-                <Pencil size={16} />
-                Salvar
-              </>
-            ) : 'Lançar'}
+            Cancelar
           </button>
-        </div>
+        )}
+        <button 
+          onClick={handleAdd}
+          className={cn(
+            "font-bold text-sm h-[38px] px-6 rounded-xl transition-all flex items-center justify-center gap-2",
+            editingService ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20" : "bg-white text-indigo-900 hover:bg-indigo-50 transition-colors"
+          )}
+        >
+          {editingService ? (
+            <>
+              <Pencil size={16} />
+              Salvar
+            </>
+          ) : 'Lançar'}
+        </button>
       </div>
 
       {/* Extra costs for Atego 2425 */}
