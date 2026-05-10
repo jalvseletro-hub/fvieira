@@ -1664,20 +1664,8 @@ export default function App() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {activeRecord.services.map((s, idx) => {
-                          const prev = idx > 0 ? activeRecord.services[idx - 1] : null;
-                          const showDateHeader = !prev || prev.date !== s.date;
-                          const colSpan = isAdmin ? 5 : 4;
-                          return (
-                          <React.Fragment key={s.id}>
-                          {showDateHeader && s.date && (
-                            <tr className="bg-slate-50/60">
-                              <td colSpan={colSpan} className="px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                                {format(parseISO(s.date), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                              </td>
-                            </tr>
-                          )}
-                          <tr className="hover:bg-slate-50 transition-colors group">
+                        {activeRecord.services.map((s) => (
+                          <tr key={s.id} className="hover:bg-slate-50 transition-colors group">
                             <td className="px-6 py-4 text-sm font-medium">
                               {s.date ? format(parseISO(s.date), 'dd/MM/yyyy') : 'N/A'}
                             </td>
