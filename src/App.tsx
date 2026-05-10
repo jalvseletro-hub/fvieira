@@ -2367,9 +2367,11 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [driverId, setDriverId] = useState<1 | 2>(1);
   const [agentCommission, setAgentCommission] = useState<string>('0');
   const [observation, setObservation] = useState<string>('');
+  const [showExtras, setShowExtras] = useState(false);
 
   useEffect(() => {
     if (editingService) {
+      setShowExtras(true);
       setDate(editingService.date);
       setType(editingService.type);
       setQty(editingService.quantity.toString());
