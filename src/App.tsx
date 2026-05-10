@@ -1759,9 +1759,7 @@ export default function App() {
                               </div>
                             </td>
                           </tr>
-                          </React.Fragment>
-                          );
-                        })}
+                        ))}
                       </tbody>
                     </table>
                   </div>
