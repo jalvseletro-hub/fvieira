@@ -1759,7 +1759,7 @@ export default function App() {
                                 <div className="mt-1 space-y-0.5">
                                   {s.gasItems.map(item => (
                                     <span key={item.id} className="text-[9px] text-orange-600 block leading-tight">
-                                      {item.quantity}x {item.size} ({formatCurrency(item.unitPrice)})
+                                      {item.quantity}x {item.size}{isAdmin ? ` (${formatCurrency(item.unitPrice)})` : ''}
                                     </span>
                                   ))}
                                 </div>
