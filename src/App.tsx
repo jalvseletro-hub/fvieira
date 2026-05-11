@@ -47,6 +47,16 @@ import {
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn, formatCurrency, cleanObject } from './lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+
+// Shared internal account used silently by the app for all users.
+// Real authorization is done by the role gate below (admin user/password vs driver plate).
+const SHARED_EMAIL = 'app-shared@fvieira.local';
+const SHARED_PASSWORD = 'FvieiraShared#2026!Stable';
+const ADMIN_USERS: { user: string; pass: string }[] = [
+  { user: 'Jardenson Alves', pass: '1836*' },
+  { user: 'Jarleane', pass: '4741*#' },
+];
 import { 
   Vehicle, 
   MonthRecord, 
