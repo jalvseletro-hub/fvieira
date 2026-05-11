@@ -1196,75 +1196,100 @@ export default function App() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans text-white">
-        <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center text-slate-900">
-          <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-xl shadow-indigo-500/30 ring-1 ring-indigo-300/40">
-            <Truck size={40} />
-          </div>
-          <h1 className="text-2xl font-bold mb-1">F.VIEIRA</h1>
-          <p className="text-slate-500 mb-2">Gestão de Frota</p>
-          <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-6">Versão 05/05/2026</p>
-          
-          <button
-            onClick={handleLogin}
-            className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 transition-all font-bold text-white shadow-lg shadow-indigo-200"
-          >
-            <LogIn size={20} />
-            Entrar com Google para Começar
-          </button>
-          
-          <p className="mt-6 text-[10px] text-slate-400 uppercase tracking-widest font-bold">Acesso Restrito</p>
-        </div>
-      </div>
-    );
-  }
-
   if (userRole === 'none') {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans">
-        <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center">
-          <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-xl shadow-indigo-500/20 overflow-hidden">
+        <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8">
+          <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-5 shadow-xl shadow-indigo-500/20 overflow-hidden">
             {settings.logoUrl ? (
               <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
               <Truck size={40} />
             )}
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Bem-vindo ao {settings.name}</h1>
-          <p className="text-slate-500 mb-8">Digite a placa do veículo para acessar o painel de lançamento</p>
-          
-          <div className="space-y-4">
-            <div className="space-y-2 text-left">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Placa do Veículo</label>
-              <input 
-                type="text" 
-                placeholder="ABC-1234"
-                value={plateInput}
-                onChange={(e) => setPlateInput(e.target.value.toUpperCase())}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-xl font-black text-slate-900 tracking-wider focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-slate-300"
-              />
-              {accessError && <p className="text-rose-500 text-xs font-bold px-1">{accessError}</p>}
-            </div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-1 text-center">{settings.name}</h1>
+          <p className="text-slate-500 mb-6 text-center text-sm">Gestão de Frota</p>
 
-            <button 
-              onClick={handlePlateAccess}
-              className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+          <div className="flex bg-slate-100 rounded-xl p-1 mb-6">
+            <button
+              type="button"
+              onClick={() => { setAccessTab('driver'); setAccessError(''); }}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${accessTab === 'driver' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}
             >
-              Acessar Painel de Lançamento
-              <ChevronRight size={20} />
+              Motorista
             </button>
-
-            <div className="pt-4 border-t border-slate-100">
-              <button 
-                onClick={handleLogout}
-                className="text-slate-400 text-xs font-bold hover:text-rose-500 transition-colors"
-              >
-                Sair da conta
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => { setAccessTab('admin'); setAccessError(''); }}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${accessTab === 'admin' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}
+            >
+              Administrador
+            </button>
           </div>
+
+          {accessTab === 'driver' ? (
+            <form
+              onSubmit={(e) => { e.preventDefault(); handlePlateAccess(); }}
+              className="space-y-4"
+            >
+              <div className="space-y-2 text-left">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Placa do Veículo</label>
+                <input
+                  type="text"
+                  placeholder="ABC-1234"
+                  value={plateInput}
+                  onChange={(e) => setPlateInput(e.target.value.toUpperCase())}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-xl font-black text-slate-900 tracking-wider focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-slate-300"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                />
+              </div>
+              {accessError && <p className="text-rose-500 text-xs font-bold px-1">{accessError}</p>}
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+              >
+                Acessar Painel
+                <ChevronRight size={20} />
+              </button>
+            </form>
+          ) : (
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleAdminAccess(); }}
+              className="space-y-4"
+            >
+              <div className="space-y-2 text-left">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Usuário</label>
+                <input
+                  type="text"
+                  value={adminUserInput}
+                  onChange={(e) => setAdminUserInput(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  autoComplete="username"
+                />
+              </div>
+              <div className="space-y-2 text-left">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Senha</label>
+                <input
+                  type="password"
+                  value={adminPassInput}
+                  onChange={(e) => setAdminPassInput(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  autoComplete="current-password"
+                />
+              </div>
+              {accessError && <p className="text-rose-500 text-xs font-bold px-1">{accessError}</p>}
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+              >
+                Entrar
+                <LogIn size={18} />
+              </button>
+            </form>
+          )}
+
+          <p className="mt-6 text-center text-[10px] text-slate-400 uppercase tracking-widest font-bold">Acesso Restrito</p>
         </div>
       </div>
     );
