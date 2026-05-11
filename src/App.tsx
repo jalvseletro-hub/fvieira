@@ -214,11 +214,18 @@ export default function App() {
   const isDataReady = forceReady || (dataLoaded.vehicles && dataLoaded.records && dataLoaded.settings);
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'vehicles' | 'settings'>('dashboard');
-  const [userRole, setUserRole] = useState<'none' | 'admin' | 'driver'>('none');
+  const [userRole, setUserRole] = useState<'none' | 'admin' | 'driver'>(() => {
+    if (typeof window === 'undefined') return 'none';
+    const stored = localStorage.getItem('ms_user_role');
+    return stored === 'admin' || stored === 'driver' ? stored : 'none';
+  });
   const [currentUserVehicleId, setCurrentUserVehicleId] = useState<string | null>(() => {
     return localStorage.getItem('ms_current_user_vehicle_id');
   });
   const [plateInput, setPlateInput] = useState('');
+  const [adminUserInput, setAdminUserInput] = useState('');
+  const [adminPassInput, setAdminPassInput] = useState('');
+  const [accessTab, setAccessTab] = useState<'driver' | 'admin'>('driver');
   const [accessError, setAccessError] = useState('');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>(INITIAL_VEHICLE_ID);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
@@ -243,22 +250,31 @@ export default function App() {
     }
   }, [selectedVehicleId, selectedRecordId, dataLoaded.records, records]);
   
-  // Auth Listener
+  // Persist role
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setIsAuthReady(true);
-      
-      if (user && user.email?.toLowerCase() === 'jalvs.eletro@gmail.com') {
-        setUserRole('admin');
-      } else if (currentUserVehicleId) {
-        setUserRole('driver');
-      } else {
-        setUserRole('none');
+    if (userRole === 'none') localStorage.removeItem('ms_user_role');
+    else localStorage.setItem('ms_user_role', userRole);
+  }, [userRole]);
+
+  // Auth Listener — silently signs in to the shared internal account
+  useEffect(() => {
+    let triedSignIn = false;
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      if (!u && !triedSignIn) {
+        triedSignIn = true;
+        supabase.auth
+          .signInWithPassword({ email: SHARED_EMAIL, password: SHARED_PASSWORD })
+          .catch((e) => {
+            console.error('Auto sign-in failed', e);
+            setIsAuthReady(true);
+          });
+        return; // wait for next auth event with the new session
       }
+      setIsAuthReady(true);
     });
     return () => unsubscribe();
-  }, [currentUserVehicleId]);
+  }, []);
 
   const isAdmin = userRole === 'admin';
   const isDriver = userRole === 'driver';
