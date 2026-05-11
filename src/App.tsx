@@ -388,11 +388,19 @@ export default function App() {
     }
   };
 
-  const handleLogin = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error('Login failed', error);
+  const handleAdminAccess = () => {
+    const u = adminUserInput.trim();
+    const p = adminPassInput;
+    const match = ADMIN_USERS.find(a => a.user.toLowerCase() === u.toLowerCase() && a.pass === p);
+    if (match) {
+      setUserRole('admin');
+      setCurrentUserVehicleId(null);
+      setAccessError('');
+      setAdminUserInput('');
+      setAdminPassInput('');
+      setActiveTab('dashboard');
+    } else {
+      setAccessError('Usuário ou senha incorretos.');
     }
   };
 
@@ -402,21 +410,21 @@ export default function App() {
       setCurrentUserVehicleId(v.id);
       setUserRole('driver');
       setAccessError('');
+      setPlateInput('');
       setActiveTab('dashboard');
     } else {
-      setAccessError('Veículo não encontrado. Verifique a placa.');
+      setAccessError('Placa não encontrada.');
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setCurrentUserVehicleId(null);
-      setUserRole('none');
-      setPlateInput('');
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
+  const handleLogout = () => {
+    // Keep the underlying shared session alive — only clear the local role gate
+    setCurrentUserVehicleId(null);
+    setUserRole('none');
+    setPlateInput('');
+    setAdminUserInput('');
+    setAdminPassInput('');
+    setAccessError('');
   };
 
   const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId) || vehicles[0];
