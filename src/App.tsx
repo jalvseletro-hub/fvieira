@@ -1005,7 +1005,7 @@ export default function App() {
   };
 
   const handleAddVehicle = async (name: string, plate: string, photoUrl?: string, pin?: string) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const newVehicle: Vehicle = {
       id,
       name,
