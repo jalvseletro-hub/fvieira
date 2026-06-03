@@ -64,6 +64,7 @@ import {
   MonthlyCosts, 
   ServiceType,
   GasItem,
+  CimentoStop,
   CompanySettings
 } from './types';
 import { 
@@ -105,11 +106,12 @@ const INITIAL_VEHICLES: Vehicle[] = [];
 const INITIAL_SERVICES: ServiceEntry[] = [];
 const INITIAL_RECORDS: MonthRecord[] = [];
 
+const DEFAULT_BAG_PRICE = 2.0; // Preço padrão por saca (Milho/Cimento) — admin pode editar
 const PRICES = {
   casada: 800,
   normal: 450,
-  milho: 0, // Manual price
-  cimento: 0, // Manual price
+  milho: DEFAULT_BAG_PRICE, // Default por saca, editável
+  cimento: DEFAULT_BAG_PRICE, // Default por saca, editável
   boa_vista: 11000,
   gas: 0, // Manual price for revenue
   frete_avulso: 0, // Manual price
@@ -123,7 +125,9 @@ const getServiceRevenue = (s: ServiceEntry) => {
   } else if (s.type === 'gas' && s.gasItems && s.gasItems.length > 0) {
     baseRevenue = s.gasItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
   } else {
-    const price = (s.type === 'milho' || s.type === 'cimento' || s.type === 'gas' || s.type === 'frete_avulso') ? (s.unitPrice || 0) : PRICES[s.type as keyof typeof PRICES];
+    const price = (s.type === 'milho' || s.type === 'cimento')
+      ? (s.unitPrice && s.unitPrice > 0 ? s.unitPrice : DEFAULT_BAG_PRICE)
+      : (s.type === 'gas' || s.type === 'frete_avulso') ? (s.unitPrice || 0) : PRICES[s.type as keyof typeof PRICES];
     baseRevenue = (s.quantity || 0) * price;
   }
   return baseRevenue;
@@ -1005,7 +1009,7 @@ export default function App() {
   };
 
   const handleAddVehicle = async (name: string, plate: string, photoUrl?: string, pin?: string) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const newVehicle: Vehicle = {
       id,
       name,
@@ -2387,6 +2391,7 @@ function GasItemsModal({ items, onSave, onClose }: {
   );
 }
 
+
 function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editingService, onEdit, onCancel }: { 
   vehicles: Vehicle[];
   selectedVehicleId: string;
@@ -2412,7 +2417,18 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [driverId, setDriverId] = useState<1 | 2>(1);
   const [agentCommission, setAgentCommission] = useState<string>('0');
   const [observation, setObservation] = useState<string>('');
+  const [cimentoStops, setCimentoStops] = useState<CimentoStop[]>([]);
   const [showExtras, setShowExtras] = useState(false);
+
+  const isAtegoVehicle = vehicles.find(v => v.id === selectedVehicleId)?.name.includes('Atego 2425');
+
+  // Auto-default unitPrice when switching to milho/cimento (2.00 R$/saca)
+  useEffect(() => {
+    if ((type === 'milho' || type === 'cimento') && (!unitPrice || parseFloat(unitPrice) === 0)) {
+      setUnitPrice(DEFAULT_BAG_PRICE.toFixed(2));
+    }
+    if (type !== 'cimento') setCimentoStops([]);
+  }, [type]);
 
   useEffect(() => {
     if (editingService) {
@@ -2447,21 +2463,32 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   }, [editingService, selectedVehicleId]);
 
   const handleAdd = () => {
+    const validStops = cimentoStops.filter(s => s.quantity > 0);
+    const useStops = type === 'cimento' && isAtegoVehicle && validStops.length > 0;
+
     const totalQty = type === 'gas' && gasItems.length > 0 
       ? gasItems.reduce((acc, i) => acc + i.quantity, 0)
-      : parseFloat(qty) || 0;
+      : useStops
+        ? validStops.reduce((acc, s) => acc + (s.quantity || 0), 0)
+        : parseFloat(qty) || 0;
 
-    const isAtego = vehicles.find(v => v.id === selectedVehicleId)?.name.includes('Atego 2425');
+    const isAtego = isAtegoVehicle;
     const isConstellation = vehicles.find(v => v.id === selectedVehicleId)?.name.includes('Constellation 30280');
+
+    // Para milho/cimento: se vier 0 ou vazio, usa o preço padrão da saca (2,00)
+    const resolvedUnitPrice = (type === 'milho' || type === 'cimento')
+      ? (parseFloat(unitPrice) > 0 ? parseFloat(unitPrice) : DEFAULT_BAG_PRICE)
+      : (parseFloat(unitPrice) || 0);
 
     const serviceData: Omit<ServiceEntry, 'id'> = { 
       date, 
       type, 
       quantity: totalQty, 
-      unitPrice: (type === 'milho' || type === 'cimento' || type === 'frete_avulso' || type === 'aleatorio' || (type === 'gas' && gasItems.length === 0)) ? (parseFloat(unitPrice) || 0) : undefined,
+      unitPrice: (type === 'milho' || type === 'cimento' || type === 'frete_avulso' || type === 'aleatorio' || (type === 'gas' && gasItems.length === 0)) ? resolvedUnitPrice : undefined,
       driverPayment: (type === 'boa_vista' || type === 'gas' || isConstellation || type === 'milho' || type === 'cimento' || type === 'aleatorio' || type === 'frete_avulso') ? (parseFloat(driverPayment) || 0) : undefined,
       containerSize: (type === 'gas' && gasItems.length === 0) ? containerSize : undefined,
       gasItems: type === 'gas' && gasItems.length > 0 ? gasItems : undefined,
+      cimentoStops: useStops ? validStops : undefined,
       helperCost: isAtego ? (parseFloat(helperCost) || 0) : 0,
       lunchCost: isAtego ? (parseFloat(lunchCost) || 0) : 0,
       portCost: isAtego ? (parseFloat(portCost) || 0) : 0,
@@ -2477,6 +2504,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
     } else {
       onAdd(serviceData);
       setGasItems([]);
+      setCimentoStops([]);
       setDieselBuckets('0');
       setOvertimeHours('0');
       setAgentCommission('0');
@@ -2600,6 +2628,67 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
           )}
         </div>
       </div>
+
+      {type === 'cimento' && isAtegoVehicle && (
+        <div className="w-full border-t border-white/10 pt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Fatiamento da Carga</p>
+              <p className="text-[11px] text-indigo-200/70">Adicione cada loja onde foram descarregadas as sacas.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCimentoStops(prev => [...prev, { id: crypto.randomUUID(), storeName: '', location: 'Rua', quantity: 0 }])}
+              className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold uppercase transition-all"
+            >
+              + Loja
+            </button>
+          </div>
+          {cimentoStops.length > 0 && (
+            <div className="space-y-2">
+              {cimentoStops.map((stop, idx) => (
+                <div key={stop.id} className="grid grid-cols-12 gap-2 items-center">
+                  <input
+                    type="text"
+                    placeholder={`Loja ${idx + 1}`}
+                    value={stop.storeName}
+                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, storeName: e.target.value } : s))}
+                    className="col-span-5 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all placeholder:text-white/30"
+                  />
+                  <select
+                    value={stop.location}
+                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, location: e.target.value as 'Rua' | 'Porto' } : s))}
+                    className="col-span-3 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all"
+                  >
+                    <option value="Rua" className="text-slate-900">Rua</option>
+                    <option value="Porto" className="text-slate-900">Porto</option>
+                  </select>
+                  <input
+                    type="number"
+                    placeholder="Sacas"
+                    value={stop.quantity || ''}
+                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, quantity: parseFloat(e.target.value) || 0 } : s))}
+                    className="col-span-3 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all placeholder:text-white/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCimentoStops(prev => prev.filter(s => s.id !== stop.id))}
+                    className="col-span-1 text-rose-300 hover:text-rose-100 text-lg leading-none"
+                    aria-label="Remover loja"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <p className="text-[11px] text-indigo-200/80 text-right">
+                Total: <span className="font-bold text-white">{cimentoStops.reduce((acc, s) => acc + (s.quantity || 0), 0)} sacas</span>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      
       
       {showExtras && (
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 w-full border-t border-white/10 pt-3">
