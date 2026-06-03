@@ -23,6 +23,7 @@ export interface ServiceEntry {
   driverPayment?: number; // Used for per-trip driver payments (e.g., Boa Vista)
   containerSize?: string; // Used for 'gas' services
   gasItems?: GasItem[]; // Used for multi-size 'gas' services
+  cimentoStops?: CimentoStop[]; // Used for sliced 'cimento' loads (Atego 2425)
   helperCost?: number; // Specific for Atego 2425
   lunchCost?: number;  // Specific for Atego 2425
   portCost?: number;   // Specific for Atego 2425
