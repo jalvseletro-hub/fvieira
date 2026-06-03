@@ -2415,7 +2415,18 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [driverId, setDriverId] = useState<1 | 2>(1);
   const [agentCommission, setAgentCommission] = useState<string>('0');
   const [observation, setObservation] = useState<string>('');
+  const [cimentoStops, setCimentoStops] = useState<CimentoStop[]>([]);
   const [showExtras, setShowExtras] = useState(false);
+
+  const isAtegoVehicle = vehicles.find(v => v.id === selectedVehicleId)?.name.includes('Atego 2425');
+
+  // Auto-default unitPrice when switching to milho/cimento (2.00 R$/saca)
+  useEffect(() => {
+    if ((type === 'milho' || type === 'cimento') && (!unitPrice || parseFloat(unitPrice) === 0)) {
+      setUnitPrice(DEFAULT_BAG_PRICE.toFixed(2));
+    }
+    if (type !== 'cimento') setCimentoStops([]);
+  }, [type]);
 
   useEffect(() => {
     if (editingService) {
