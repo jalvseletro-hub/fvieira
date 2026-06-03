@@ -124,7 +124,9 @@ const getServiceRevenue = (s: ServiceEntry) => {
   } else if (s.type === 'gas' && s.gasItems && s.gasItems.length > 0) {
     baseRevenue = s.gasItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
   } else {
-    const price = (s.type === 'milho' || s.type === 'cimento' || s.type === 'gas' || s.type === 'frete_avulso') ? (s.unitPrice || 0) : PRICES[s.type as keyof typeof PRICES];
+    const price = (s.type === 'milho' || s.type === 'cimento')
+      ? (s.unitPrice && s.unitPrice > 0 ? s.unitPrice : DEFAULT_BAG_PRICE)
+      : (s.type === 'gas' || s.type === 'frete_avulso') ? (s.unitPrice || 0) : PRICES[s.type as keyof typeof PRICES];
     baseRevenue = (s.quantity || 0) * price;
   }
   return baseRevenue;
