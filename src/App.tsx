@@ -2462,21 +2462,32 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   }, [editingService, selectedVehicleId]);
 
   const handleAdd = () => {
+    const validStops = cimentoStops.filter(s => s.quantity > 0);
+    const useStops = type === 'cimento' && isAtegoVehicle && validStops.length > 0;
+
     const totalQty = type === 'gas' && gasItems.length > 0 
       ? gasItems.reduce((acc, i) => acc + i.quantity, 0)
-      : parseFloat(qty) || 0;
+      : useStops
+        ? validStops.reduce((acc, s) => acc + (s.quantity || 0), 0)
+        : parseFloat(qty) || 0;
 
-    const isAtego = vehicles.find(v => v.id === selectedVehicleId)?.name.includes('Atego 2425');
+    const isAtego = isAtegoVehicle;
     const isConstellation = vehicles.find(v => v.id === selectedVehicleId)?.name.includes('Constellation 30280');
+
+    // Para milho/cimento: se vier 0 ou vazio, usa o preço padrão da saca (2,00)
+    const resolvedUnitPrice = (type === 'milho' || type === 'cimento')
+      ? (parseFloat(unitPrice) > 0 ? parseFloat(unitPrice) : DEFAULT_BAG_PRICE)
+      : (parseFloat(unitPrice) || 0);
 
     const serviceData: Omit<ServiceEntry, 'id'> = { 
       date, 
       type, 
       quantity: totalQty, 
-      unitPrice: (type === 'milho' || type === 'cimento' || type === 'frete_avulso' || type === 'aleatorio' || (type === 'gas' && gasItems.length === 0)) ? (parseFloat(unitPrice) || 0) : undefined,
+      unitPrice: (type === 'milho' || type === 'cimento' || type === 'frete_avulso' || type === 'aleatorio' || (type === 'gas' && gasItems.length === 0)) ? resolvedUnitPrice : undefined,
       driverPayment: (type === 'boa_vista' || type === 'gas' || isConstellation || type === 'milho' || type === 'cimento' || type === 'aleatorio' || type === 'frete_avulso') ? (parseFloat(driverPayment) || 0) : undefined,
       containerSize: (type === 'gas' && gasItems.length === 0) ? containerSize : undefined,
       gasItems: type === 'gas' && gasItems.length > 0 ? gasItems : undefined,
+      cimentoStops: useStops ? validStops : undefined,
       helperCost: isAtego ? (parseFloat(helperCost) || 0) : 0,
       lunchCost: isAtego ? (parseFloat(lunchCost) || 0) : 0,
       portCost: isAtego ? (parseFloat(portCost) || 0) : 0,
@@ -2492,6 +2503,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
     } else {
       onAdd(serviceData);
       setGasItems([]);
+      setCimentoStops([]);
       setDieselBuckets('0');
       setOvertimeHours('0');
       setAgentCommission('0');
