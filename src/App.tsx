@@ -64,6 +64,7 @@ import {
   MonthlyCosts, 
   ServiceType,
   GasItem,
+  CimentoStop,
   CompanySettings
 } from './types';
 import { 
