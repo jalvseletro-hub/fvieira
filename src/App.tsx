@@ -2387,7 +2387,67 @@ function GasItemsModal({ items, onSave, onClose }: {
           </button>
         </div>
       </div>
-    </div>
+
+      {type === 'cimento' && isAtegoVehicle && (
+        <div className="w-full border-t border-white/10 pt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Fatiamento da Carga</p>
+              <p className="text-[11px] text-indigo-200/70">Adicione cada loja onde foram descarregadas as sacas.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCimentoStops(prev => [...prev, { id: crypto.randomUUID(), storeName: '', location: 'Rua', quantity: 0 }])}
+              className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold uppercase transition-all"
+            >
+              + Loja
+            </button>
+          </div>
+          {cimentoStops.length > 0 && (
+            <div className="space-y-2">
+              {cimentoStops.map((stop, idx) => (
+                <div key={stop.id} className="grid grid-cols-12 gap-2 items-center">
+                  <input
+                    type="text"
+                    placeholder={`Loja ${idx + 1}`}
+                    value={stop.storeName}
+                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, storeName: e.target.value } : s))}
+                    className="col-span-5 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all placeholder:text-white/30"
+                  />
+                  <select
+                    value={stop.location}
+                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, location: e.target.value as 'Rua' | 'Porto' } : s))}
+                    className="col-span-3 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all"
+                  >
+                    <option value="Rua" className="text-slate-900">Rua</option>
+                    <option value="Porto" className="text-slate-900">Porto</option>
+                  </select>
+                  <input
+                    type="number"
+                    placeholder="Sacas"
+                    value={stop.quantity || ''}
+                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, quantity: parseFloat(e.target.value) || 0 } : s))}
+                    className="col-span-3 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all placeholder:text-white/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCimentoStops(prev => prev.filter(s => s.id !== stop.id))}
+                    className="col-span-1 text-rose-300 hover:text-rose-100 text-lg leading-none"
+                    aria-label="Remover loja"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <p className="text-[11px] text-indigo-200/80 text-right">
+                Total: <span className="font-bold text-white">{cimentoStops.reduce((acc, s) => acc + (s.quantity || 0), 0)} sacas</span>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+      </div>
+
   );
 }
 
