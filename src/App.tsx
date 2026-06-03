@@ -105,11 +105,12 @@ const INITIAL_VEHICLES: Vehicle[] = [];
 const INITIAL_SERVICES: ServiceEntry[] = [];
 const INITIAL_RECORDS: MonthRecord[] = [];
 
+const DEFAULT_BAG_PRICE = 2.0; // Preço padrão por saca (Milho/Cimento) — admin pode editar
 const PRICES = {
   casada: 800,
   normal: 450,
-  milho: 0, // Manual price
-  cimento: 0, // Manual price
+  milho: DEFAULT_BAG_PRICE, // Default por saca, editável
+  cimento: DEFAULT_BAG_PRICE, // Default por saca, editável
   boa_vista: 11000,
   gas: 0, // Manual price for revenue
   frete_avulso: 0, // Manual price
