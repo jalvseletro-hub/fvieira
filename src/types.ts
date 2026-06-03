@@ -7,6 +7,13 @@ export interface GasItem {
   unitPrice: number;
 }
 
+export interface CimentoStop {
+  id: string;
+  storeName: string;
+  location: 'Rua' | 'Porto';
+  quantity: number;
+}
+
 export interface ServiceEntry {
   id: string;
   date: string;
