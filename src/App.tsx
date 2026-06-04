@@ -966,6 +966,178 @@ export default function App() {
     doc.save(`Recibo_${vehicle?.plate || 'Veiculo'}_${format(new Date(record.year, record.month), 'MM_yyyy')}.pdf`);
   };
 
+  // Recibo Semanal do Atego 2425 (apenas Cimento)
+  const generateCimentoWeeklyPDF = (weekRefDateISO: string) => {
+    const atego = vehicles.find(v => v.name.includes('Atego 2425'));
+    if (!atego) {
+      alert('Veículo Atego 2425 não encontrado.');
+      return;
+    }
+
+    // Calcular segunda-feira da semana referenciada
+    const refDate = parseISO(weekRefDateISO);
+    const day = refDate.getDay(); // 0=Dom..6=Sab
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(refDate);
+    monday.setDate(refDate.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    // Coletar todos os serviços Cimento do Atego dentro da semana (de todos os meses)
+    const ategoRecords = records.filter(r => r.vehicleId === atego.id);
+    const weekServices: ServiceEntry[] = [];
+    ategoRecords.forEach(r => {
+      r.services.forEach(s => {
+        if (s.type !== 'cimento') return;
+        const d = parseISO(s.date);
+        if (d >= monday && d <= sunday) weekServices.push(s);
+      });
+    });
+
+    if (weekServices.length === 0) {
+      alert(`Nenhum serviço de Cimento encontrado entre ${format(monday, 'dd/MM/yyyy')} e ${format(sunday, 'dd/MM/yyyy')}.`);
+      return;
+    }
+
+    weekServices.sort((a, b) => a.date.localeCompare(b.date));
+
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'normal');
+
+    // Header (empresa)
+    if (settings.logoUrl) {
+      try { doc.addImage(settings.logoUrl, 'JPEG', 14, 10, 30, 30); } catch (e) { console.error(e); }
+    }
+    doc.setFontSize(20);
+    doc.setTextColor(79, 70, 229);
+    doc.setFont('helvetica', 'bold');
+    doc.text(settings.name, settings.logoUrl ? 50 : 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    let headerY = 30;
+    if (settings.cnpj) { doc.text(`CNPJ: ${settings.cnpj}`, settings.logoUrl ? 50 : 14, headerY); headerY += 5; }
+    if (settings.address) { doc.text(settings.address, settings.logoUrl ? 50 : 14, headerY); headerY += 5; }
+    if (settings.phone || settings.email) {
+      doc.text(`${settings.phone || ''} ${settings.phone && settings.email ? '|' : ''} ${settings.email || ''}`, settings.logoUrl ? 50 : 14, headerY);
+      headerY += 5;
+    }
+
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Recibo gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, Math.max(headerY + 10, 45));
+
+    // Bloco de info
+    const infoStartY = Math.max(headerY + 20, 55);
+    doc.setFontSize(13);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Recibo Semanal - Cimento', 14, infoStartY);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Veículo: ${atego.name}${atego.plate ? ` (${atego.plate})` : ''}`, 14, infoStartY + 8);
+    doc.text(`Período: ${format(monday, 'dd/MM/yyyy')} a ${format(sunday, 'dd/MM/yyyy')}`, 14, infoStartY + 14);
+
+    // Detalhamento: uma linha por parada (loja), agrupando por viagem (data)
+    const rows: (string | number)[][] = [];
+    let totalSacasRua = 0;
+    let totalSacasPorto = 0;
+    let totalGeral = 0;
+
+    weekServices.forEach(s => {
+      const dateStr = format(parseISO(s.date), 'dd/MM/yyyy');
+      if (s.cimentoStops && s.cimentoStops.length > 0) {
+        s.cimentoStops.forEach(stop => {
+          const price = CIMENTO_PRICES[stop.location] ?? DEFAULT_BAG_PRICE;
+          const total = (stop.quantity || 0) * price;
+          if (stop.location === 'Rua') totalSacasRua += stop.quantity || 0;
+          else totalSacasPorto += stop.quantity || 0;
+          totalGeral += total;
+          rows.push([
+            dateStr,
+            stop.storeName || '-',
+            stop.location,
+            `${stop.quantity || 0} sc`,
+            formatCurrency(price),
+            formatCurrency(total),
+          ]);
+        });
+      } else {
+        // Carga simples sem fatiamento - assume Rua (preço padrão / unitPrice)
+        const price = s.unitPrice && s.unitPrice > 0 ? s.unitPrice : DEFAULT_BAG_PRICE;
+        const total = (s.quantity || 0) * price;
+        totalSacasRua += s.quantity || 0;
+        totalGeral += total;
+        rows.push([
+          dateStr,
+          'Carga única',
+          'Rua',
+          `${s.quantity || 0} sc`,
+          formatCurrency(price),
+          formatCurrency(total),
+        ]);
+      }
+    });
+
+    autoTable(doc, {
+      startY: infoStartY + 22,
+      head: [['Data', 'Loja', 'Local', 'Qtd', 'R$/Saca', 'Total']],
+      body: rows,
+      theme: 'striped',
+      headStyles: { fillColor: [79, 70, 229], fontStyle: 'bold' },
+      styles: { font: 'helvetica', fontSize: 9 },
+      columnStyles: {
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+        5: { halign: 'right' },
+      },
+    });
+
+    const summaryY = (doc as any).lastAutoTable.finalY + 10;
+    autoTable(doc, {
+      startY: summaryY,
+      head: [['Resumo da Semana', '']],
+      body: [
+        ['Sacas - Rua (R$ 2,00)', `${totalSacasRua} sc`],
+        ['Sacas - Porto (R$ 2,50)', `${totalSacasPorto} sc`],
+        ['Total de Sacas', `${totalSacasRua + totalSacasPorto} sc`],
+        [{ content: 'VALOR TOTAL A RECEBER', styles: { fontStyle: 'bold' as const, fillColor: [248, 250, 252] as [number, number, number] } },
+         { content: formatCurrency(totalGeral), styles: { fontStyle: 'bold' as const, fillColor: [248, 250, 252] as [number, number, number], textColor: [79, 70, 229] as [number, number, number] } }],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [51, 65, 85], fontStyle: 'bold' },
+      styles: { font: 'helvetica', fontSize: 10 },
+      columnStyles: { 1: { halign: 'right' } },
+    });
+
+    // Assinatura
+    const pageHeight = doc.internal.pageSize.height;
+    const signatureY = Math.max((doc as any).lastAutoTable.finalY + 40, pageHeight - 30);
+    if (signatureY > pageHeight - 10) {
+      doc.addPage();
+      doc.setDrawColor(200, 200, 200);
+      doc.line(60, 50, 150, 50);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Assinatura do Recebedor', 105, 55, { align: 'center' });
+    } else {
+      doc.setDrawColor(200, 200, 200);
+      doc.line(60, signatureY, 150, signatureY);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Assinatura do Recebedor', 105, signatureY + 5, { align: 'center' });
+    }
+
+    doc.save(`Recibo_Semanal_Cimento_${format(monday, 'dd-MM-yyyy')}_a_${format(sunday, 'dd-MM-yyyy')}.pdf`);
+  };
+
+
+
   const generateFleetPDF = (month: number, year: number) => {
     const doc = new jsPDF();
     const monthName = format(new Date(year, month), 'MMMM yyyy', { locale: ptBR });
