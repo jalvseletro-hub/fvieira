@@ -982,7 +982,7 @@ export default function App() {
     monday.setDate(refDate.getDate() + diffToMonday);
     monday.setHours(0, 0, 0, 0);
     const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+    sunday.setDate(monday.getDate() + 5); // Sábado (veículo não trabalha aos domingos)
     sunday.setHours(23, 59, 59, 999);
 
     // Coletar todos os serviços Cimento do Atego dentro da semana (de todos os meses)
