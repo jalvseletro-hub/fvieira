@@ -248,6 +248,8 @@ export default function App() {
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<{recordId: string, service: ServiceEntry} | null>(null);
   const [showAddService, setShowAddService] = useState(false);
+  const [showWeeklyReceiptDialog, setShowWeeklyReceiptDialog] = useState(false);
+  const [weeklyReceiptDate, setWeeklyReceiptDate] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
 
   // Auto-select latest record for selected vehicle if none selected
   useEffect(() => {
