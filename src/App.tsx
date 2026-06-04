@@ -1705,9 +1705,15 @@ export default function App() {
                           <DropdownMenuItem onClick={() => generateReceiptPDF(activeRecord)}>
                             <FileDown size={16} className="mr-2" /> Recibo
                           </DropdownMenuItem>
+                          {selectedVehicle?.name.includes('Atego 2425') && (
+                            <DropdownMenuItem onClick={() => setShowWeeklyReceiptDialog(true)}>
+                              <FileDown size={16} className="mr-2" /> Recibo Semanal
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => generateFleetPDF(activeRecord.month, activeRecord.year)}>
                             <Truck size={16} className="mr-2" /> PDF da Frota
                           </DropdownMenuItem>
+
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
