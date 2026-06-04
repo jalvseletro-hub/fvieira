@@ -2401,7 +2401,7 @@ export default function App() {
               </div>
               <div>
                 <h2 className="text-lg font-bold">Recibo Semanal - Cimento</h2>
-                <p className="text-xs text-slate-500">Atego 2425 • Selecione qualquer data da semana desejada (Seg-Dom)</p>
+                <p className="text-xs text-slate-500">Atego 2425 • Selecione qualquer data da semana desejada (Seg-Sáb)</p>
               </div>
             </div>
             <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Data de referência</label>
