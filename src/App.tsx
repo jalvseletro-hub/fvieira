@@ -2701,6 +2701,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setGasItems([]);
       setDieselBuckets('0');
       setOvertimeHours('0');
+      setCimentoStops([]);
     }
   }, [editingService, selectedVehicleId]);
 
