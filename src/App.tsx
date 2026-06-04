@@ -107,6 +107,10 @@ const INITIAL_SERVICES: ServiceEntry[] = [];
 const INITIAL_RECORDS: MonthRecord[] = [];
 
 const DEFAULT_BAG_PRICE = 2.0; // Preço padrão por saca (Milho/Cimento) — admin pode editar
+const CIMENTO_PRICES: Record<'Rua' | 'Porto', number> = {
+  Rua: 2.0,
+  Porto: 2.5,
+};
 const PRICES = {
   casada: 800,
   normal: 450,
@@ -124,6 +128,9 @@ const getServiceRevenue = (s: ServiceEntry) => {
     baseRevenue = -(s.quantity * (s.unitPrice || 0));
   } else if (s.type === 'gas' && s.gasItems && s.gasItems.length > 0) {
     baseRevenue = s.gasItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+  } else if (s.type === 'cimento' && s.cimentoStops && s.cimentoStops.length > 0) {
+    // Cimento fatiado: cada parada usa o preço da sua localização (Rua/Porto)
+    baseRevenue = s.cimentoStops.reduce((acc, stop) => acc + (stop.quantity || 0) * (CIMENTO_PRICES[stop.location] ?? DEFAULT_BAG_PRICE), 0);
   } else {
     const price = (s.type === 'milho' || s.type === 'cimento')
       ? (s.unitPrice && s.unitPrice > 0 ? s.unitPrice : DEFAULT_BAG_PRICE)
@@ -132,6 +139,7 @@ const getServiceRevenue = (s: ServiceEntry) => {
   }
   return baseRevenue;
 };
+
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
