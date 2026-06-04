@@ -1665,6 +1665,16 @@ export default function App() {
                         <FileDown size={18} />
                         Recibo
                       </button>
+                      {selectedVehicle?.name.includes('Atego 2425') && (
+                        <button
+                          onClick={() => setShowWeeklyReceiptDialog(true)}
+                          className="inline-flex items-center gap-2 bg-amber-50 border border-amber-100 hover:bg-amber-100 text-amber-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+                          title="Recibo Semanal - Cimento (Atego 2425)"
+                        >
+                          <FileDown size={18} />
+                          Recibo Semanal
+                        </button>
+                      )}
                       <button
                         onClick={() => generateFleetPDF(activeRecord.month, activeRecord.year)}
                         className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
@@ -1673,6 +1683,7 @@ export default function App() {
                         <Truck size={18} />
                         Frota
                       </button>
+
                     </div>
 
                     {/* Mobile: menu compacto */}
