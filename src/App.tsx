@@ -2689,6 +2689,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setDriverId(editingService.driverId || 1);
       setAgentCommission(editingService.agentCommission?.toString() || '0');
       setObservation(editingService.observation || '');
+      setCimentoStops(editingService.cimentoStops || []);
     } else {
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setType('normal');
