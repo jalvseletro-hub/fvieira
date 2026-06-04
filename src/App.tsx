@@ -107,6 +107,10 @@ const INITIAL_SERVICES: ServiceEntry[] = [];
 const INITIAL_RECORDS: MonthRecord[] = [];
 
 const DEFAULT_BAG_PRICE = 2.0; // Preço padrão por saca (Milho/Cimento) — admin pode editar
+const CIMENTO_PRICES: Record<'Rua' | 'Porto', number> = {
+  Rua: 2.0,
+  Porto: 2.5,
+};
 const PRICES = {
   casada: 800,
   normal: 450,
@@ -124,6 +128,9 @@ const getServiceRevenue = (s: ServiceEntry) => {
     baseRevenue = -(s.quantity * (s.unitPrice || 0));
   } else if (s.type === 'gas' && s.gasItems && s.gasItems.length > 0) {
     baseRevenue = s.gasItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+  } else if (s.type === 'cimento' && s.cimentoStops && s.cimentoStops.length > 0) {
+    // Cimento fatiado: cada parada usa o preço da sua localização (Rua/Porto)
+    baseRevenue = s.cimentoStops.reduce((acc, stop) => acc + (stop.quantity || 0) * (CIMENTO_PRICES[stop.location] ?? DEFAULT_BAG_PRICE), 0);
   } else {
     const price = (s.type === 'milho' || s.type === 'cimento')
       ? (s.unitPrice && s.unitPrice > 0 ? s.unitPrice : DEFAULT_BAG_PRICE)
@@ -132,6 +139,7 @@ const getServiceRevenue = (s: ServiceEntry) => {
   }
   return baseRevenue;
 };
+
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -240,6 +248,8 @@ export default function App() {
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<{recordId: string, service: ServiceEntry} | null>(null);
   const [showAddService, setShowAddService] = useState(false);
+  const [showWeeklyReceiptDialog, setShowWeeklyReceiptDialog] = useState(false);
+  const [weeklyReceiptDate, setWeeklyReceiptDate] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
 
   // Auto-select latest record for selected vehicle if none selected
   useEffect(() => {
@@ -956,6 +966,178 @@ export default function App() {
     doc.save(`Recibo_${vehicle?.plate || 'Veiculo'}_${format(new Date(record.year, record.month), 'MM_yyyy')}.pdf`);
   };
 
+  // Recibo Semanal do Atego 2425 (apenas Cimento)
+  const generateCimentoWeeklyPDF = (weekRefDateISO: string) => {
+    const atego = vehicles.find(v => v.name.includes('Atego 2425'));
+    if (!atego) {
+      alert('Veículo Atego 2425 não encontrado.');
+      return;
+    }
+
+    // Calcular segunda-feira da semana referenciada
+    const refDate = parseISO(weekRefDateISO);
+    const day = refDate.getDay(); // 0=Dom..6=Sab
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(refDate);
+    monday.setDate(refDate.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    // Coletar todos os serviços Cimento do Atego dentro da semana (de todos os meses)
+    const ategoRecords = records.filter(r => r.vehicleId === atego.id);
+    const weekServices: ServiceEntry[] = [];
+    ategoRecords.forEach(r => {
+      r.services.forEach(s => {
+        if (s.type !== 'cimento') return;
+        const d = parseISO(s.date);
+        if (d >= monday && d <= sunday) weekServices.push(s);
+      });
+    });
+
+    if (weekServices.length === 0) {
+      alert(`Nenhum serviço de Cimento encontrado entre ${format(monday, 'dd/MM/yyyy')} e ${format(sunday, 'dd/MM/yyyy')}.`);
+      return;
+    }
+
+    weekServices.sort((a, b) => a.date.localeCompare(b.date));
+
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'normal');
+
+    // Header (empresa)
+    if (settings.logoUrl) {
+      try { doc.addImage(settings.logoUrl, 'JPEG', 14, 10, 30, 30); } catch (e) { console.error(e); }
+    }
+    doc.setFontSize(20);
+    doc.setTextColor(79, 70, 229);
+    doc.setFont('helvetica', 'bold');
+    doc.text(settings.name, settings.logoUrl ? 50 : 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    let headerY = 30;
+    if (settings.cnpj) { doc.text(`CNPJ: ${settings.cnpj}`, settings.logoUrl ? 50 : 14, headerY); headerY += 5; }
+    if (settings.address) { doc.text(settings.address, settings.logoUrl ? 50 : 14, headerY); headerY += 5; }
+    if (settings.phone || settings.email) {
+      doc.text(`${settings.phone || ''} ${settings.phone && settings.email ? '|' : ''} ${settings.email || ''}`, settings.logoUrl ? 50 : 14, headerY);
+      headerY += 5;
+    }
+
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Recibo gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, Math.max(headerY + 10, 45));
+
+    // Bloco de info
+    const infoStartY = Math.max(headerY + 20, 55);
+    doc.setFontSize(13);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Recibo Semanal - Cimento', 14, infoStartY);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Veículo: ${atego.name}${atego.plate ? ` (${atego.plate})` : ''}`, 14, infoStartY + 8);
+    doc.text(`Período: ${format(monday, 'dd/MM/yyyy')} a ${format(sunday, 'dd/MM/yyyy')}`, 14, infoStartY + 14);
+
+    // Detalhamento: uma linha por parada (loja), agrupando por viagem (data)
+    const rows: (string | number)[][] = [];
+    let totalSacasRua = 0;
+    let totalSacasPorto = 0;
+    let totalGeral = 0;
+
+    weekServices.forEach(s => {
+      const dateStr = format(parseISO(s.date), 'dd/MM/yyyy');
+      if (s.cimentoStops && s.cimentoStops.length > 0) {
+        s.cimentoStops.forEach(stop => {
+          const price = CIMENTO_PRICES[stop.location] ?? DEFAULT_BAG_PRICE;
+          const total = (stop.quantity || 0) * price;
+          if (stop.location === 'Rua') totalSacasRua += stop.quantity || 0;
+          else totalSacasPorto += stop.quantity || 0;
+          totalGeral += total;
+          rows.push([
+            dateStr,
+            stop.storeName || '-',
+            stop.location,
+            `${stop.quantity || 0} sc`,
+            formatCurrency(price),
+            formatCurrency(total),
+          ]);
+        });
+      } else {
+        // Carga simples sem fatiamento - assume Rua (preço padrão / unitPrice)
+        const price = s.unitPrice && s.unitPrice > 0 ? s.unitPrice : DEFAULT_BAG_PRICE;
+        const total = (s.quantity || 0) * price;
+        totalSacasRua += s.quantity || 0;
+        totalGeral += total;
+        rows.push([
+          dateStr,
+          'Carga única',
+          'Rua',
+          `${s.quantity || 0} sc`,
+          formatCurrency(price),
+          formatCurrency(total),
+        ]);
+      }
+    });
+
+    autoTable(doc, {
+      startY: infoStartY + 22,
+      head: [['Data', 'Loja', 'Local', 'Qtd', 'R$/Saca', 'Total']],
+      body: rows,
+      theme: 'striped',
+      headStyles: { fillColor: [79, 70, 229], fontStyle: 'bold' },
+      styles: { font: 'helvetica', fontSize: 9 },
+      columnStyles: {
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+        5: { halign: 'right' },
+      },
+    });
+
+    const summaryY = (doc as any).lastAutoTable.finalY + 10;
+    autoTable(doc, {
+      startY: summaryY,
+      head: [['Resumo da Semana', '']],
+      body: [
+        ['Sacas - Rua (R$ 2,00)', `${totalSacasRua} sc`],
+        ['Sacas - Porto (R$ 2,50)', `${totalSacasPorto} sc`],
+        ['Total de Sacas', `${totalSacasRua + totalSacasPorto} sc`],
+        [{ content: 'VALOR TOTAL A RECEBER', styles: { fontStyle: 'bold' as const, fillColor: [248, 250, 252] as [number, number, number] } },
+         { content: formatCurrency(totalGeral), styles: { fontStyle: 'bold' as const, fillColor: [248, 250, 252] as [number, number, number], textColor: [79, 70, 229] as [number, number, number] } }],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [51, 65, 85], fontStyle: 'bold' },
+      styles: { font: 'helvetica', fontSize: 10 },
+      columnStyles: { 1: { halign: 'right' } },
+    });
+
+    // Assinatura
+    const pageHeight = doc.internal.pageSize.height;
+    const signatureY = Math.max((doc as any).lastAutoTable.finalY + 40, pageHeight - 30);
+    if (signatureY > pageHeight - 10) {
+      doc.addPage();
+      doc.setDrawColor(200, 200, 200);
+      doc.line(60, 50, 150, 50);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Assinatura do Recebedor', 105, 55, { align: 'center' });
+    } else {
+      doc.setDrawColor(200, 200, 200);
+      doc.line(60, signatureY, 150, signatureY);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Assinatura do Recebedor', 105, signatureY + 5, { align: 'center' });
+    }
+
+    doc.save(`Recibo_Semanal_Cimento_${format(monday, 'dd-MM-yyyy')}_a_${format(sunday, 'dd-MM-yyyy')}.pdf`);
+  };
+
+
+
   const generateFleetPDF = (month: number, year: number) => {
     const doc = new jsPDF();
     const monthName = format(new Date(year, month), 'MMMM yyyy', { locale: ptBR });
@@ -1483,6 +1665,16 @@ export default function App() {
                         <FileDown size={18} />
                         Recibo
                       </button>
+                      {selectedVehicle?.name.includes('Atego 2425') && (
+                        <button
+                          onClick={() => setShowWeeklyReceiptDialog(true)}
+                          className="inline-flex items-center gap-2 bg-amber-50 border border-amber-100 hover:bg-amber-100 text-amber-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+                          title="Recibo Semanal - Cimento (Atego 2425)"
+                        >
+                          <FileDown size={18} />
+                          Recibo Semanal
+                        </button>
+                      )}
                       <button
                         onClick={() => generateFleetPDF(activeRecord.month, activeRecord.year)}
                         className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
@@ -1491,6 +1683,7 @@ export default function App() {
                         <Truck size={18} />
                         Frota
                       </button>
+
                     </div>
 
                     {/* Mobile: menu compacto */}
@@ -1512,9 +1705,15 @@ export default function App() {
                           <DropdownMenuItem onClick={() => generateReceiptPDF(activeRecord)}>
                             <FileDown size={16} className="mr-2" /> Recibo
                           </DropdownMenuItem>
+                          {selectedVehicle?.name.includes('Atego 2425') && (
+                            <DropdownMenuItem onClick={() => setShowWeeklyReceiptDialog(true)}>
+                              <FileDown size={16} className="mr-2" /> Recibo Semanal
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => generateFleetPDF(activeRecord.month, activeRecord.year)}>
                             <Truck size={16} className="mr-2" /> PDF da Frota
                           </DropdownMenuItem>
+
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -2192,6 +2391,48 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {showWeeklyReceiptDialog && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                <FileDown size={22} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">Recibo Semanal - Cimento</h2>
+                <p className="text-xs text-slate-500">Atego 2425 • Selecione qualquer data da semana desejada (Seg-Dom)</p>
+              </div>
+            </div>
+            <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Data de referência</label>
+            <input
+              type="date"
+              value={weeklyReceiptDate}
+              onChange={(e) => setWeeklyReceiptDate(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400 mb-5"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowWeeklyReceiptDialog(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  generateCimentoWeeklyPDF(weeklyReceiptDate);
+                  setShowWeeklyReceiptDialog(false);
+                }}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                Gerar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 backdrop-blur-xl border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
