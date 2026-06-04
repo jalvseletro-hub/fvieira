@@ -2392,6 +2392,48 @@ export default function App() {
         </div>
       )}
 
+      {showWeeklyReceiptDialog && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                <FileDown size={22} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">Recibo Semanal - Cimento</h2>
+                <p className="text-xs text-slate-500">Atego 2425 • Selecione qualquer data da semana desejada (Seg-Dom)</p>
+              </div>
+            </div>
+            <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Data de referência</label>
+            <input
+              type="date"
+              value={weeklyReceiptDate}
+              onChange={(e) => setWeeklyReceiptDate(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400 mb-5"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowWeeklyReceiptDialog(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  generateCimentoWeeklyPDF(weeklyReceiptDate);
+                  setShowWeeklyReceiptDialog(false);
+                }}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                Gerar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 backdrop-blur-xl border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <div className="flex items-center justify-around px-2 py-2 safe-bottom">
