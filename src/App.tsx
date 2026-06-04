@@ -982,7 +982,7 @@ export default function App() {
     monday.setDate(refDate.getDate() + diffToMonday);
     monday.setHours(0, 0, 0, 0);
     const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+    sunday.setDate(monday.getDate() + 5); // Sábado (veículo não trabalha aos domingos)
     sunday.setHours(23, 59, 59, 999);
 
     // Coletar todos os serviços Cimento do Atego dentro da semana (de todos os meses)
@@ -2401,7 +2401,7 @@ export default function App() {
               </div>
               <div>
                 <h2 className="text-lg font-bold">Recibo Semanal - Cimento</h2>
-                <p className="text-xs text-slate-500">Atego 2425 • Selecione qualquer data da semana desejada (Seg-Dom)</p>
+                <p className="text-xs text-slate-500">Atego 2425 • Selecione qualquer data da semana desejada (Seg-Sáb)</p>
               </div>
             </div>
             <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Data de referência</label>
@@ -2689,6 +2689,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setDriverId(editingService.driverId || 1);
       setAgentCommission(editingService.agentCommission?.toString() || '0');
       setObservation(editingService.observation || '');
+      setCimentoStops(editingService.cimentoStops || []);
     } else {
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setType('normal');
@@ -2700,6 +2701,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setGasItems([]);
       setDieselBuckets('0');
       setOvertimeHours('0');
+      setCimentoStops([]);
     }
   }, [editingService, selectedVehicleId]);
 
@@ -2812,25 +2814,27 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
               </button>
             </div>
           )}
-          <div className="flex gap-2">
-            <input 
-              type="number" 
-              placeholder={(type === 'milho' || type === 'cimento' || type === 'gas' || type === 'frete_avulso' || type === 'aleatorio') ? "Sacas/Qtd" : "Qtd"}
-              value={type === 'gas' && gasItems.length > 0 ? gasItems.reduce((acc, i) => acc + i.quantity, 0).toString() : qty}
-              disabled={type === 'gas' && gasItems.length > 0}
-              onChange={(e) => setQty(e.target.value)}
-              className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all disabled:opacity-50"
-            />
-            {(!isDriver && (type === 'milho' || type === 'cimento' || type === 'frete_avulso' || type === 'aleatorio' || (type === 'gas' && gasItems.length === 0))) && (
+          {!(type === 'cimento' && isAtegoVehicle) && (
+            <div className="flex gap-2">
               <input 
                 type="number" 
-                placeholder="R$ / Unid"
-                value={unitPrice}
-                onChange={(e) => setUnitPrice(e.target.value)}
-                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all"
+                placeholder={(type === 'milho' || type === 'cimento' || type === 'gas' || type === 'frete_avulso' || type === 'aleatorio') ? "Sacas/Qtd" : "Qtd"}
+                value={type === 'gas' && gasItems.length > 0 ? gasItems.reduce((acc, i) => acc + i.quantity, 0).toString() : qty}
+                disabled={type === 'gas' && gasItems.length > 0}
+                onChange={(e) => setQty(e.target.value)}
+                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all disabled:opacity-50"
               />
-            )}
-          </div>
+              {(!isDriver && (type === 'milho' || type === 'cimento' || type === 'frete_avulso' || type === 'aleatorio' || (type === 'gas' && gasItems.length === 0))) && (
+                <input 
+                  type="number" 
+                  placeholder="R$ / Unid"
+                  value={unitPrice}
+                  onChange={(e) => setUnitPrice(e.target.value)}
+                  className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all"
+                />
+              )}
+            </div>
+          )}
           <div className="flex flex-col">
             <label className="text-[10px] text-indigo-200 font-bold uppercase mb-1">Motorista</label>
             <div className="flex bg-white/10 border border-white/20 rounded-xl p-0.5">
