@@ -2812,25 +2812,27 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
               </button>
             </div>
           )}
-          <div className="flex gap-2">
-            <input 
-              type="number" 
-              placeholder={(type === 'milho' || type === 'cimento' || type === 'gas' || type === 'frete_avulso' || type === 'aleatorio') ? "Sacas/Qtd" : "Qtd"}
-              value={type === 'gas' && gasItems.length > 0 ? gasItems.reduce((acc, i) => acc + i.quantity, 0).toString() : qty}
-              disabled={type === 'gas' && gasItems.length > 0}
-              onChange={(e) => setQty(e.target.value)}
-              className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all disabled:opacity-50"
-            />
-            {(!isDriver && (type === 'milho' || type === 'cimento' || type === 'frete_avulso' || type === 'aleatorio' || (type === 'gas' && gasItems.length === 0))) && (
+          {!(type === 'cimento' && isAtegoVehicle) && (
+            <div className="flex gap-2">
               <input 
                 type="number" 
-                placeholder="R$ / Unid"
-                value={unitPrice}
-                onChange={(e) => setUnitPrice(e.target.value)}
-                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all"
+                placeholder={(type === 'milho' || type === 'cimento' || type === 'gas' || type === 'frete_avulso' || type === 'aleatorio') ? "Sacas/Qtd" : "Qtd"}
+                value={type === 'gas' && gasItems.length > 0 ? gasItems.reduce((acc, i) => acc + i.quantity, 0).toString() : qty}
+                disabled={type === 'gas' && gasItems.length > 0}
+                onChange={(e) => setQty(e.target.value)}
+                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all disabled:opacity-50"
               />
-            )}
-          </div>
+              {(!isDriver && (type === 'milho' || type === 'cimento' || type === 'frete_avulso' || type === 'aleatorio' || (type === 'gas' && gasItems.length === 0))) && (
+                <input 
+                  type="number" 
+                  placeholder="R$ / Unid"
+                  value={unitPrice}
+                  onChange={(e) => setUnitPrice(e.target.value)}
+                  className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all"
+                />
+              )}
+            </div>
+          )}
           <div className="flex flex-col">
             <label className="text-[10px] text-indigo-200 font-bold uppercase mb-1">Motorista</label>
             <div className="flex bg-white/10 border border-white/20 rounded-xl p-0.5">
