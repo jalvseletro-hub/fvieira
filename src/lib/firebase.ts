@@ -164,6 +164,35 @@ function rowToSettings(r: any) {
     logoUrl: r.logo_url ?? undefined,
   };
 }
+function debtToRow(d: any, userId: string) {
+  return {
+    id: d.id,
+    user_id: userId,
+    name: d.name,
+    total_value: Number(d.totalValue) || 0,
+    installment_value: Number(d.installmentValue) || 0,
+    total_installments: Number(d.totalInstallments) || 1,
+    paid_installments: Number(d.paidInstallments) || 0,
+    payment_day: Number(d.paymentDay) || 1,
+    start_date: d.startDate,
+    notes: d.notes ?? null,
+  };
+}
+function rowToDebt(r: any) {
+  return {
+    id: r.id,
+    name: r.name,
+    totalValue: Number(r.total_value) || 0,
+    installmentValue: Number(r.installment_value) || 0,
+    totalInstallments: Number(r.total_installments) || 1,
+    paidInstallments: Number(r.paid_installments) || 0,
+    paymentDay: Number(r.payment_day) || 1,
+    startDate: r.start_date,
+    notes: r.notes ?? undefined,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
 function uid(): string {
   if (!_currentUser) throw new Error("Not authenticated");
@@ -189,6 +218,11 @@ export async function setDoc(ref: DocRef, data: any) {
       .from("company_settings")
       .upsert(settingsToRow(data, userId), { onConflict: "user_id" });
     if (error) throw error;
+  } else if (ref.name === "debts") {
+    const { error } = await supabase
+      .from("debts" as any)
+      .upsert(debtToRow({ ...data, id: ref.id }, userId));
+    if (error) throw error;
   }
 }
 
@@ -198,6 +232,9 @@ export async function deleteDoc(ref: DocRef) {
     if (error) throw error;
   } else if (ref.name === "records") {
     const { error } = await supabase.from("month_records").delete().eq("id", ref.id);
+    if (error) throw error;
+  } else if (ref.name === "debts") {
+    const { error } = await supabase.from("debts" as any).delete().eq("id", ref.id);
     if (error) throw error;
   }
 }
