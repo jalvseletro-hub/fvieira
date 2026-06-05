@@ -50,6 +50,51 @@ export type Database = {
         }
         Relationships: []
       }
+      debts: {
+        Row: {
+          created_at: string
+          id: string
+          installment_value: number
+          name: string
+          notes: string | null
+          paid_installments: number
+          payment_day: number
+          start_date: string
+          total_installments: number
+          total_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          installment_value?: number
+          name: string
+          notes?: string | null
+          paid_installments?: number
+          payment_day?: number
+          start_date?: string
+          total_installments?: number
+          total_value?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          installment_value?: number
+          name?: string
+          notes?: string | null
+          paid_installments?: number
+          payment_day?: number
+          start_date?: string
+          total_installments?: number
+          total_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       month_records: {
         Row: {
           client: Json | null
