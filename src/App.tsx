@@ -65,7 +65,8 @@ import {
   ServiceType,
   GasItem,
   CimentoStop,
-  CompanySettings
+  CompanySettings,
+  Debt
 } from './types';
 import { 
   auth, 
