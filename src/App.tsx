@@ -416,6 +416,48 @@ export default function App() {
     }
   };
 
+  // ===== Dívidas (apenas admin) =====
+  const handleSaveDebt = async (data: Omit<Debt, 'id' | 'createdAt' | 'updatedAt'>, id?: string) => {
+    try {
+      const debtId = id || crypto.randomUUID();
+      const existing = id ? debts.find(d => d.id === id) : undefined;
+      const now = new Date().toISOString();
+      const debt: Debt = {
+        ...data,
+        id: debtId,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+      };
+      await setDoc(doc(db, 'debts', debtId), cleanObject(debt));
+      setShowDebtModal(false);
+      setEditingDebtId(null);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, `debts/${id || 'new'}`);
+    }
+  };
+
+  const handleDeleteDebt = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'debts', id));
+      setDebtToDelete(null);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `debts/${id}`);
+    }
+  };
+
+  const handleAdjustDebtPaid = async (id: string, delta: number) => {
+    const d = debts.find(x => x.id === id);
+    if (!d) return;
+    const next = Math.max(0, Math.min(d.totalInstallments, d.paidInstallments + delta));
+    if (next === d.paidInstallments) return;
+    try {
+      await setDoc(doc(db, 'debts', id), cleanObject({ ...d, paidInstallments: next, updatedAt: new Date().toISOString() }));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, `debts/${id}`);
+    }
+  };
+
+
   const handleAdminAccess = () => {
     const u = adminUserInput.trim();
     const p = adminPassInput;
