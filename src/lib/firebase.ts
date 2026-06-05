@@ -288,6 +288,12 @@ export async function getDocs(ref: CollectionRef) {
       const rec = rowToRecord(r);
       docs.push({ id: rec.id, data: () => rec });
     });
+  } else if (ref.name === "debts") {
+    const { data } = await supabase.from("debts" as any).select("*").order("created_at");
+    (data ?? []).forEach((r: any) => {
+      const d = rowToDebt(r);
+      docs.push({ id: d.id, data: () => d });
+    });
   }
   return { docs };
 }
