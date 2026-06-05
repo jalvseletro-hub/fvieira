@@ -1150,6 +1150,182 @@ export default function App() {
     doc.save(`Recibo_Semanal_Cimento_${format(monday, 'dd-MM-yyyy')}_a_${format(sunday, 'dd-MM-yyyy')}.pdf`);
   };
 
+  // Recibo genérico (Semanal ou Mensal) para qualquer veículo
+  const SERVICE_LABELS: Record<ServiceType, string> = {
+    casada: 'Casada', normal: 'Normal', milho: 'Milho', cimento: 'Cimento',
+    boa_vista: 'Boa Vista', gas: 'Gás', frete_avulso: 'Frete Avulso', aleatorio: 'Aleatório',
+  };
+
+  const drawCompanyHeader = (doc: jsPDF) => {
+    if (settings.logoUrl) {
+      try { doc.addImage(settings.logoUrl, 'JPEG', 14, 10, 30, 30); } catch (e) { console.error(e); }
+    }
+    doc.setFontSize(20);
+    doc.setTextColor(79, 70, 229);
+    doc.setFont('helvetica', 'bold');
+    doc.text(settings.name, settings.logoUrl ? 50 : 14, 22);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    let y = 30;
+    if (settings.cnpj) { doc.text(`CNPJ: ${settings.cnpj}`, settings.logoUrl ? 50 : 14, y); y += 5; }
+    if (settings.address) { doc.text(settings.address, settings.logoUrl ? 50 : 14, y); y += 5; }
+    if (settings.phone || settings.email) {
+      doc.text(`${settings.phone || ''} ${settings.phone && settings.email ? '|' : ''} ${settings.email || ''}`, settings.logoUrl ? 50 : 14, y); y += 5;
+    }
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Recibo gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, Math.max(y + 10, 45));
+    return Math.max(y + 20, 55);
+  };
+
+  const drawSignature = (doc: jsPDF) => {
+    const pageHeight = doc.internal.pageSize.height;
+    const sigY = Math.max((doc as any).lastAutoTable.finalY + 40, pageHeight - 30);
+    if (sigY > pageHeight - 10) {
+      doc.addPage();
+      doc.setDrawColor(200, 200, 200);
+      doc.line(60, 50, 150, 50);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Assinatura do Recebedor', 105, 55, { align: 'center' });
+    } else {
+      doc.setDrawColor(200, 200, 200);
+      doc.line(60, sigY, 150, sigY);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Assinatura do Recebedor', 105, sigY + 5, { align: 'center' });
+    }
+  };
+
+  const generateGenericReceiptPDF = (
+    vehicle: Vehicle,
+    services: ServiceEntry[],
+    periodLabel: string,
+    titleSuffix: string,
+    fileName: string,
+  ) => {
+    if (services.length === 0) {
+      alert(`Nenhum serviço encontrado em ${periodLabel}.`);
+      return;
+    }
+    const sorted = [...services].sort((a, b) => a.date.localeCompare(b.date));
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'normal');
+    const infoStartY = drawCompanyHeader(doc);
+
+    doc.setFontSize(13);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Recibo ${titleSuffix}`, 14, infoStartY);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Veículo: ${vehicle.name}${vehicle.plate ? ` (${vehicle.plate})` : ''}`, 14, infoStartY + 8);
+    doc.text(`Período: ${periodLabel}`, 14, infoStartY + 14);
+
+    const rows: (string | number)[][] = [];
+    let totalGeral = 0;
+    const byType: Record<string, { count: number; revenue: number }> = {};
+
+    sorted.forEach(s => {
+      const dateStr = format(parseISO(s.date), 'dd/MM/yyyy');
+      const typeLabel = SERVICE_LABELS[s.type] || s.type;
+      const rev = getServiceRevenue(s);
+      totalGeral += rev;
+      byType[typeLabel] = byType[typeLabel] || { count: 0, revenue: 0 };
+      byType[typeLabel].count += 1;
+      byType[typeLabel].revenue += rev;
+
+      let detail = '';
+      if (s.type === 'gas' && s.gasItems && s.gasItems.length > 0) {
+        detail = s.gasItems.map(g => `${g.quantity}x ${g.size}`).join(', ');
+      } else if (s.type === 'cimento' && s.cimentoStops && s.cimentoStops.length > 0) {
+        detail = s.cimentoStops.map(st => `${st.storeName}(${st.location}): ${st.quantity}sc`).join(' | ');
+      } else {
+        detail = `${s.quantity}${s.type === 'milho' || s.type === 'cimento' ? ' sc' : ''}`;
+      }
+      if (s.observation) detail += ` — Obs: ${s.observation}`;
+
+      rows.push([dateStr, typeLabel, detail, formatCurrency(rev)]);
+    });
+
+    autoTable(doc, {
+      startY: infoStartY + 22,
+      head: [['Data', 'Tipo', 'Detalhe', 'Total']],
+      body: rows,
+      theme: 'striped',
+      headStyles: { fillColor: [79, 70, 229], fontStyle: 'bold' },
+      styles: { font: 'helvetica', fontSize: 9 },
+      columnStyles: { 3: { halign: 'right' } },
+    });
+
+    const summaryY = (doc as any).lastAutoTable.finalY + 10;
+    const summaryBody = Object.entries(byType).map(([t, v]) => [
+      `${t} (${v.count}x)`, formatCurrency(v.revenue),
+    ]);
+    summaryBody.push([
+      { content: 'VALOR TOTAL A RECEBER', styles: { fontStyle: 'bold' as const, fillColor: [248, 250, 252] as [number, number, number] } } as any,
+      { content: formatCurrency(totalGeral), styles: { fontStyle: 'bold' as const, fillColor: [248, 250, 252] as [number, number, number], textColor: [79, 70, 229] as [number, number, number] } } as any,
+    ]);
+
+    autoTable(doc, {
+      startY: summaryY,
+      head: [['Resumo', '']],
+      body: summaryBody,
+      theme: 'grid',
+      headStyles: { fillColor: [51, 65, 85], fontStyle: 'bold' },
+      styles: { font: 'helvetica', fontSize: 10 },
+      columnStyles: { 1: { halign: 'right' } },
+    });
+
+    drawSignature(doc);
+    doc.save(fileName);
+  };
+
+  const generateWeeklyReceiptForVehicle = (vehicle: Vehicle, weekRefDateISO: string) => {
+    const refDate = parseISO(weekRefDateISO);
+    const day = refDate.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(refDate);
+    monday.setDate(refDate.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const saturday = new Date(monday);
+    saturday.setDate(monday.getDate() + 5);
+    saturday.setHours(23, 59, 59, 999);
+
+    const vehicleRecs = records.filter(r => r.vehicleId === vehicle.id);
+    const weekServices: ServiceEntry[] = [];
+    vehicleRecs.forEach(r => {
+      r.services.forEach(s => {
+        const d = parseISO(s.date);
+        if (d >= monday && d <= saturday) weekServices.push(s);
+      });
+    });
+
+    generateGenericReceiptPDF(
+      vehicle,
+      weekServices,
+      `${format(monday, 'dd/MM/yyyy')} a ${format(saturday, 'dd/MM/yyyy')}`,
+      'Semanal',
+      `Recibo_Semanal_${vehicle.name.replace(/\s+/g, '_')}_${format(monday, 'dd-MM-yyyy')}.pdf`,
+    );
+  };
+
+  const generateMonthlyReceiptForVehicle = (vehicle: Vehicle, month: number, year: number) => {
+    const monthRecords = records.filter(r => r.vehicleId === vehicle.id && r.month === month && r.year === year);
+    const monthServices: ServiceEntry[] = monthRecords.flatMap(r => r.services);
+    generateGenericReceiptPDF(
+      vehicle,
+      monthServices,
+      format(new Date(year, month), "MMMM 'de' yyyy", { locale: ptBR }),
+      'Mensal',
+      `Recibo_Mensal_${vehicle.name.replace(/\s+/g, '_')}_${format(new Date(year, month), 'MM-yyyy')}.pdf`,
+    );
+  };
+
+
+
 
 
   const generateFleetPDF = (month: number, year: number) => {
