@@ -330,6 +330,7 @@ export function onSnapshot(
     vehicles: "vehicles",
     records: "month_records",
     settings: "company_settings",
+    debts: "debts",
   };
   const table = tableMap[ref.__kind === "collection" ? ref.name : ref.name];
   const channel = supabase
