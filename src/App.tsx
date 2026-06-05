@@ -3208,12 +3208,12 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
           </div>
         )}
         <div className="flex flex-col">
-          <label className="text-[10px] text-indigo-200 font-bold uppercase mb-1">Diesel (Baldes)</label>
+          <label className="text-[10px] text-indigo-200 font-bold uppercase mb-1">{isSaveiroGasVehicle ? 'Gasolina (R$)' : 'Diesel (Baldes)'}</label>
           <input 
             type="number" 
-            placeholder="Baldes"
-            value={dieselBuckets}
-            onChange={(e) => setDieselBuckets(e.target.value)}
+            placeholder={isSaveiroGasVehicle ? 'R$' : 'Baldes'}
+            value={isSaveiroGasVehicle ? gasolinaValue : dieselBuckets}
+            onChange={(e) => isSaveiroGasVehicle ? setGasolinaValue(e.target.value) : setDieselBuckets(e.target.value)}
             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all"
           />
         </div>
