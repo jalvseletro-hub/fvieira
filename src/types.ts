@@ -32,6 +32,7 @@ export interface ServiceEntry {
   driverId?: 1 | 2; // For vehicles with two drivers
   agentCommission?: number; // Specific commission for 'milho' services
   observation?: string; // Observação do motorista
+  gasolinaCost?: number; // Saveiro Gás: valor em R$ de gasolina abastecida
 }
 
 export interface MonthlyCosts {
@@ -44,6 +45,21 @@ export interface MonthlyCosts {
   maintenanceLabor: number;
   overtimeHours?: number;
   overtimeRate?: number;
+  gasolinaCost?: number; // Saveiro Gás: custo total de gasolina no mês
+}
+
+export interface Debt {
+  id: string;
+  name: string;
+  totalValue: number;
+  installmentValue: number;
+  totalInstallments: number;
+  paidInstallments: number;
+  paymentDay: number; // dia do mês (1-31)
+  startDate: string; // ISO yyyy-mm-dd
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ClientInfo {

@@ -65,7 +65,8 @@ import {
   ServiceType,
   GasItem,
   CimentoStop,
-  CompanySettings
+  CompanySettings,
+  Debt
 } from './types';
 import { 
   auth, 
@@ -208,6 +209,7 @@ export default function App() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [records, setRecords] = useState<MonthRecord[]>([]);
   const [settings, setSettings] = useState<CompanySettings>(INITIAL_SETTINGS);
+  const [debts, setDebts] = useState<Debt[]>([]);
   const [dataLoaded, setDataLoaded] = useState({
     vehicles: false,
     records: false,
@@ -225,7 +227,7 @@ export default function App() {
 
   const isDataReady = forceReady || (dataLoaded.vehicles && dataLoaded.records && dataLoaded.settings);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'vehicles' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'vehicles' | 'settings' | 'debts'>('dashboard');
   const [userRole, setUserRole] = useState<'none' | 'admin' | 'driver'>(() => {
     if (typeof window === 'undefined') return 'none';
     const stored = localStorage.getItem('ms_user_role');
@@ -249,7 +251,13 @@ export default function App() {
   const [editingService, setEditingService] = useState<{recordId: string, service: ServiceEntry} | null>(null);
   const [showAddService, setShowAddService] = useState(false);
   const [showWeeklyReceiptDialog, setShowWeeklyReceiptDialog] = useState(false);
+  const [showMonthlyReceiptDialog, setShowMonthlyReceiptDialog] = useState(false);
   const [weeklyReceiptDate, setWeeklyReceiptDate] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
+  const [monthlyReceiptMonth, setMonthlyReceiptMonth] = useState<number>(() => new Date().getMonth());
+  const [monthlyReceiptYear, setMonthlyReceiptYear] = useState<number>(() => new Date().getFullYear());
+  const [showDebtModal, setShowDebtModal] = useState(false);
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
+  const [debtToDelete, setDebtToDelete] = useState<string | null>(null);
 
   // Auto-select latest record for selected vehicle if none selected
   useEffect(() => {
@@ -331,10 +339,16 @@ export default function App() {
       setDataLoaded(prev => ({ ...prev, settings: true }));
     }, (error) => handleFirestoreError(error, OperationType.GET, 'settings/company', false));
 
+    const unsubDebts = onSnapshot(collection(db, 'debts'), (snapshot) => {
+      const data = snapshot.docs.map((d: any) => d.data() as Debt);
+      setDebts(data);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'debts', false));
+
     return () => {
       unsubVehicles();
       unsubRecords();
       unsubSettings();
+      unsubDebts();
     };
   }, [user]);
 
@@ -401,6 +415,48 @@ export default function App() {
       handleFirestoreError(error, OperationType.WRITE, 'settings/company');
     }
   };
+
+  // ===== Dívidas (apenas admin) =====
+  const handleSaveDebt = async (data: Omit<Debt, 'id' | 'createdAt' | 'updatedAt'>, id?: string) => {
+    try {
+      const debtId = id || crypto.randomUUID();
+      const existing = id ? debts.find(d => d.id === id) : undefined;
+      const now = new Date().toISOString();
+      const debt: Debt = {
+        ...data,
+        id: debtId,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+      };
+      await setDoc(doc(db, 'debts', debtId), cleanObject(debt));
+      setShowDebtModal(false);
+      setEditingDebtId(null);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, `debts/${id || 'new'}`);
+    }
+  };
+
+  const handleDeleteDebt = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'debts', id));
+      setDebtToDelete(null);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `debts/${id}`);
+    }
+  };
+
+  const handleAdjustDebtPaid = async (id: string, delta: number) => {
+    const d = debts.find(x => x.id === id);
+    if (!d) return;
+    const next = Math.max(0, Math.min(d.totalInstallments, d.paidInstallments + delta));
+    if (next === d.paidInstallments) return;
+    try {
+      await setDoc(doc(db, 'debts', id), cleanObject({ ...d, paidInstallments: next, updatedAt: new Date().toISOString() }));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, `debts/${id}`);
+    }
+  };
+
 
   const handleAdminAccess = () => {
     const u = adminUserInput.trim();
@@ -472,7 +528,14 @@ export default function App() {
       return acc + (s.quantity * price);
     }, 0);
 
-    const diesel = record.costs.dieselLiters * record.costs.dieselPrice;
+    const vehicleForCost = vehicles.find(v => v.id === record.vehicleId);
+    const isSaveiroGasVehicle = !!vehicleForCost?.name.toLowerCase().includes('saveiro');
+    // Para Saveiro Gás: combustível = soma dos R$ de gasolina lançados (gasolinaCost) + valor mensal opcional
+    const gasolinaServices = record.services.reduce((acc, s) => acc + (s.gasolinaCost || 0), 0);
+    const diesel = isSaveiroGasVehicle
+      ? (gasolinaServices > 0 ? gasolinaServices : (record.costs.gasolinaCost || 0))
+      : record.costs.dieselLiters * record.costs.dieselPrice;
+
     
     const driver1Services = record.services.filter(s => (s.driverId || 1) === 1);
     const driver2Services = record.services.filter(s => (s.driverId || 1) === 2);
@@ -1136,6 +1199,182 @@ export default function App() {
     doc.save(`Recibo_Semanal_Cimento_${format(monday, 'dd-MM-yyyy')}_a_${format(sunday, 'dd-MM-yyyy')}.pdf`);
   };
 
+  // Recibo genérico (Semanal ou Mensal) para qualquer veículo
+  const SERVICE_LABELS: Record<ServiceType, string> = {
+    casada: 'Casada', normal: 'Normal', milho: 'Milho', cimento: 'Cimento',
+    boa_vista: 'Boa Vista', gas: 'Gás', frete_avulso: 'Frete Avulso', aleatorio: 'Aleatório',
+  };
+
+  const drawCompanyHeader = (doc: jsPDF) => {
+    if (settings.logoUrl) {
+      try { doc.addImage(settings.logoUrl, 'JPEG', 14, 10, 30, 30); } catch (e) { console.error(e); }
+    }
+    doc.setFontSize(20);
+    doc.setTextColor(79, 70, 229);
+    doc.setFont('helvetica', 'bold');
+    doc.text(settings.name, settings.logoUrl ? 50 : 14, 22);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    let y = 30;
+    if (settings.cnpj) { doc.text(`CNPJ: ${settings.cnpj}`, settings.logoUrl ? 50 : 14, y); y += 5; }
+    if (settings.address) { doc.text(settings.address, settings.logoUrl ? 50 : 14, y); y += 5; }
+    if (settings.phone || settings.email) {
+      doc.text(`${settings.phone || ''} ${settings.phone && settings.email ? '|' : ''} ${settings.email || ''}`, settings.logoUrl ? 50 : 14, y); y += 5;
+    }
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Recibo gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, Math.max(y + 10, 45));
+    return Math.max(y + 20, 55);
+  };
+
+  const drawSignature = (doc: jsPDF) => {
+    const pageHeight = doc.internal.pageSize.height;
+    const sigY = Math.max((doc as any).lastAutoTable.finalY + 40, pageHeight - 30);
+    if (sigY > pageHeight - 10) {
+      doc.addPage();
+      doc.setDrawColor(200, 200, 200);
+      doc.line(60, 50, 150, 50);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Assinatura do Recebedor', 105, 55, { align: 'center' });
+    } else {
+      doc.setDrawColor(200, 200, 200);
+      doc.line(60, sigY, 150, sigY);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Assinatura do Recebedor', 105, sigY + 5, { align: 'center' });
+    }
+  };
+
+  const generateGenericReceiptPDF = (
+    vehicle: Vehicle,
+    services: ServiceEntry[],
+    periodLabel: string,
+    titleSuffix: string,
+    fileName: string,
+  ) => {
+    if (services.length === 0) {
+      alert(`Nenhum serviço encontrado em ${periodLabel}.`);
+      return;
+    }
+    const sorted = [...services].sort((a, b) => a.date.localeCompare(b.date));
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'normal');
+    const infoStartY = drawCompanyHeader(doc);
+
+    doc.setFontSize(13);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Recibo ${titleSuffix}`, 14, infoStartY);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Veículo: ${vehicle.name}${vehicle.plate ? ` (${vehicle.plate})` : ''}`, 14, infoStartY + 8);
+    doc.text(`Período: ${periodLabel}`, 14, infoStartY + 14);
+
+    const rows: (string | number)[][] = [];
+    let totalGeral = 0;
+    const byType: Record<string, { count: number; revenue: number }> = {};
+
+    sorted.forEach(s => {
+      const dateStr = format(parseISO(s.date), 'dd/MM/yyyy');
+      const typeLabel = SERVICE_LABELS[s.type] || s.type;
+      const rev = getServiceRevenue(s);
+      totalGeral += rev;
+      byType[typeLabel] = byType[typeLabel] || { count: 0, revenue: 0 };
+      byType[typeLabel].count += 1;
+      byType[typeLabel].revenue += rev;
+
+      let detail = '';
+      if (s.type === 'gas' && s.gasItems && s.gasItems.length > 0) {
+        detail = s.gasItems.map(g => `${g.quantity}x ${g.size}`).join(', ');
+      } else if (s.type === 'cimento' && s.cimentoStops && s.cimentoStops.length > 0) {
+        detail = s.cimentoStops.map(st => `${st.storeName}(${st.location}): ${st.quantity}sc`).join(' | ');
+      } else {
+        detail = `${s.quantity}${s.type === 'milho' || s.type === 'cimento' ? ' sc' : ''}`;
+      }
+      if (s.observation) detail += ` — Obs: ${s.observation}`;
+
+      rows.push([dateStr, typeLabel, detail, formatCurrency(rev)]);
+    });
+
+    autoTable(doc, {
+      startY: infoStartY + 22,
+      head: [['Data', 'Tipo', 'Detalhe', 'Total']],
+      body: rows,
+      theme: 'striped',
+      headStyles: { fillColor: [79, 70, 229], fontStyle: 'bold' },
+      styles: { font: 'helvetica', fontSize: 9 },
+      columnStyles: { 3: { halign: 'right' } },
+    });
+
+    const summaryY = (doc as any).lastAutoTable.finalY + 10;
+    const summaryBody = Object.entries(byType).map(([t, v]) => [
+      `${t} (${v.count}x)`, formatCurrency(v.revenue),
+    ]);
+    summaryBody.push([
+      { content: 'VALOR TOTAL A RECEBER', styles: { fontStyle: 'bold' as const, fillColor: [248, 250, 252] as [number, number, number] } } as any,
+      { content: formatCurrency(totalGeral), styles: { fontStyle: 'bold' as const, fillColor: [248, 250, 252] as [number, number, number], textColor: [79, 70, 229] as [number, number, number] } } as any,
+    ]);
+
+    autoTable(doc, {
+      startY: summaryY,
+      head: [['Resumo', '']],
+      body: summaryBody,
+      theme: 'grid',
+      headStyles: { fillColor: [51, 65, 85], fontStyle: 'bold' },
+      styles: { font: 'helvetica', fontSize: 10 },
+      columnStyles: { 1: { halign: 'right' } },
+    });
+
+    drawSignature(doc);
+    doc.save(fileName);
+  };
+
+  const generateWeeklyReceiptForVehicle = (vehicle: Vehicle, weekRefDateISO: string) => {
+    const refDate = parseISO(weekRefDateISO);
+    const day = refDate.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(refDate);
+    monday.setDate(refDate.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const saturday = new Date(monday);
+    saturday.setDate(monday.getDate() + 5);
+    saturday.setHours(23, 59, 59, 999);
+
+    const vehicleRecs = records.filter(r => r.vehicleId === vehicle.id);
+    const weekServices: ServiceEntry[] = [];
+    vehicleRecs.forEach(r => {
+      r.services.forEach(s => {
+        const d = parseISO(s.date);
+        if (d >= monday && d <= saturday) weekServices.push(s);
+      });
+    });
+
+    generateGenericReceiptPDF(
+      vehicle,
+      weekServices,
+      `${format(monday, 'dd/MM/yyyy')} a ${format(saturday, 'dd/MM/yyyy')}`,
+      'Semanal',
+      `Recibo_Semanal_${vehicle.name.replace(/\s+/g, '_')}_${format(monday, 'dd-MM-yyyy')}.pdf`,
+    );
+  };
+
+  const generateMonthlyReceiptForVehicle = (vehicle: Vehicle, month: number, year: number) => {
+    const monthRecords = records.filter(r => r.vehicleId === vehicle.id && r.month === month && r.year === year);
+    const monthServices: ServiceEntry[] = monthRecords.flatMap(r => r.services);
+    generateGenericReceiptPDF(
+      vehicle,
+      monthServices,
+      format(new Date(year, month), "MMMM 'de' yyyy", { locale: ptBR }),
+      'Mensal',
+      `Recibo_Mensal_${vehicle.name.replace(/\s+/g, '_')}_${format(new Date(year, month), 'MM-yyyy')}.pdf`,
+    );
+  };
+
+
+
 
 
   const generateFleetPDF = (month: number, year: number) => {
@@ -1665,14 +1904,24 @@ export default function App() {
                         <FileDown size={18} />
                         Recibo
                       </button>
-                      {selectedVehicle?.name.includes('Atego 2425') && (
+                      {selectedVehicle && (
                         <button
                           onClick={() => setShowWeeklyReceiptDialog(true)}
                           className="inline-flex items-center gap-2 bg-amber-50 border border-amber-100 hover:bg-amber-100 text-amber-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-                          title="Recibo Semanal - Cimento (Atego 2425)"
+                          title="Recibo Semanal (Seg-Sáb)"
                         >
                           <FileDown size={18} />
                           Recibo Semanal
+                        </button>
+                      )}
+                      {selectedVehicle && (
+                        <button
+                          onClick={() => setShowMonthlyReceiptDialog(true)}
+                          className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 text-emerald-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+                          title="Recibo Mensal"
+                        >
+                          <FileDown size={18} />
+                          Recibo Mensal
                         </button>
                       )}
                       <button
@@ -1705,9 +1954,14 @@ export default function App() {
                           <DropdownMenuItem onClick={() => generateReceiptPDF(activeRecord)}>
                             <FileDown size={16} className="mr-2" /> Recibo
                           </DropdownMenuItem>
-                          {selectedVehicle?.name.includes('Atego 2425') && (
+                          {selectedVehicle && (
                             <DropdownMenuItem onClick={() => setShowWeeklyReceiptDialog(true)}>
                               <FileDown size={16} className="mr-2" /> Recibo Semanal
+                            </DropdownMenuItem>
+                          )}
+                          {selectedVehicle && (
+                            <DropdownMenuItem onClick={() => setShowMonthlyReceiptDialog(true)}>
+                              <FileDown size={16} className="mr-2" /> Recibo Mensal
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem onClick={() => generateFleetPDF(activeRecord.month, activeRecord.year)}>
@@ -2400,8 +2654,8 @@ export default function App() {
                 <FileDown size={22} />
               </div>
               <div>
-                <h2 className="text-lg font-bold">Recibo Semanal - Cimento</h2>
-                <p className="text-xs text-slate-500">Atego 2425 • Selecione qualquer data da semana desejada (Seg-Sáb)</p>
+                <h2 className="text-lg font-bold">Recibo Semanal</h2>
+                <p className="text-xs text-slate-500">{selectedVehicle?.name} • Seg-Sáb da semana escolhida</p>
               </div>
             </div>
             <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Data de referência</label>
@@ -2420,7 +2674,11 @@ export default function App() {
               </button>
               <button
                 onClick={() => {
-                  generateCimentoWeeklyPDF(weeklyReceiptDate);
+                  if (selectedVehicle?.name.includes('Atego 2425')) {
+                    generateCimentoWeeklyPDF(weeklyReceiptDate);
+                  } else if (selectedVehicle) {
+                    generateWeeklyReceiptForVehicle(selectedVehicle, weeklyReceiptDate);
+                  }
                   setShowWeeklyReceiptDialog(false);
                 }}
                 className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700"
@@ -2431,6 +2689,53 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {showMonthlyReceiptDialog && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                <FileDown size={22} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">Recibo Mensal</h2>
+                <p className="text-xs text-slate-500">{selectedVehicle?.name}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div>
+                <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Mês</label>
+                <select value={monthlyReceiptMonth} onChange={(e) => setMonthlyReceiptMonth(parseInt(e.target.value))}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-indigo-400">
+                  {Array.from({length: 12}).map((_, i) => (
+                    <option key={i} value={i}>{format(new Date(2024, i), 'MMMM', { locale: ptBR })}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Ano</label>
+                <input type="number" value={monthlyReceiptYear} onChange={(e) => setMonthlyReceiptYear(parseInt(e.target.value) || new Date().getFullYear())}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-indigo-400" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowMonthlyReceiptDialog(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200">
+                Cancelar
+              </button>
+              <button onClick={() => {
+                  if (selectedVehicle) generateMonthlyReceiptForVehicle(selectedVehicle, monthlyReceiptMonth, monthlyReceiptYear);
+                  setShowMonthlyReceiptDialog(false);
+                }}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700">
+                Gerar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
 
 
@@ -2654,6 +2959,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [lunchCost, setLunchCost] = useState<string>('60');
   const [portCost, setPortCost] = useState<string>('0');
   const [dieselBuckets, setDieselBuckets] = useState<string>('0');
+  const [gasolinaValue, setGasolinaValue] = useState<string>('0');
   const [overtimeHours, setOvertimeHours] = useState<string>('0');
   const [driverId, setDriverId] = useState<1 | 2>(1);
   const [agentCommission, setAgentCommission] = useState<string>('0');
@@ -2661,7 +2967,9 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [cimentoStops, setCimentoStops] = useState<CimentoStop[]>([]);
   const [showExtras, setShowExtras] = useState(false);
 
-  const isAtegoVehicle = vehicles.find(v => v.id === selectedVehicleId)?.name.includes('Atego 2425');
+  const selectedVehicleName = vehicles.find(v => v.id === selectedVehicleId)?.name || '';
+  const isAtegoVehicle = selectedVehicleName.includes('Atego 2425');
+  const isSaveiroGasVehicle = selectedVehicleName.toLowerCase().includes('saveiro');
 
   // Auto-default unitPrice when switching to milho/cimento (2.00 R$/saca)
   useEffect(() => {
@@ -2685,6 +2993,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setLunchCost(editingService.lunchCost?.toString() || '60');
       setPortCost(editingService.portCost?.toString() || '0');
       setDieselBuckets(editingService.dieselLiters ? (editingService.dieselLiters / 20).toString() : '0');
+      setGasolinaValue(editingService.gasolinaCost?.toString() || '0');
       setOvertimeHours(editingService.overtimeHours?.toString() || '0');
       setDriverId(editingService.driverId || 1);
       setAgentCommission(editingService.agentCommission?.toString() || '0');
@@ -2700,6 +3009,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setObservation('');
       setGasItems([]);
       setDieselBuckets('0');
+      setGasolinaValue('0');
       setOvertimeHours('0');
       setCimentoStops([]);
     }
@@ -2735,7 +3045,8 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       helperCost: isAtego ? (parseFloat(helperCost) || 0) : 0,
       lunchCost: isAtego ? (parseFloat(lunchCost) || 0) : 0,
       portCost: isAtego ? (parseFloat(portCost) || 0) : 0,
-      dieselLiters: (parseFloat(dieselBuckets) || 0) * 20,
+      dieselLiters: isSaveiroGasVehicle ? 0 : (parseFloat(dieselBuckets) || 0) * 20,
+      gasolinaCost: isSaveiroGasVehicle ? (parseFloat(gasolinaValue) || 0) : undefined,
       overtimeHours: parseFloat(overtimeHours) || 0,
       driverId,
       agentCommission: type === 'milho' ? (parseFloat(agentCommission) || 0) : undefined,
@@ -2749,6 +3060,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setGasItems([]);
       setCimentoStops([]);
       setDieselBuckets('0');
+      setGasolinaValue('0');
       setOvertimeHours('0');
       setAgentCommission('0');
       setDriverPayment('');
@@ -2962,12 +3274,12 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
           </div>
         )}
         <div className="flex flex-col">
-          <label className="text-[10px] text-indigo-200 font-bold uppercase mb-1">Diesel (Baldes)</label>
+          <label className="text-[10px] text-indigo-200 font-bold uppercase mb-1">{isSaveiroGasVehicle ? 'Gasolina (R$)' : 'Diesel (Baldes)'}</label>
           <input 
             type="number" 
-            placeholder="Baldes"
-            value={dieselBuckets}
-            onChange={(e) => setDieselBuckets(e.target.value)}
+            placeholder={isSaveiroGasVehicle ? 'R$' : 'Baldes'}
+            value={isSaveiroGasVehicle ? gasolinaValue : dieselBuckets}
+            onChange={(e) => isSaveiroGasVehicle ? setGasolinaValue(e.target.value) : setDieselBuckets(e.target.value)}
             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all"
           />
         </div>
