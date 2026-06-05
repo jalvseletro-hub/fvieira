@@ -2654,8 +2654,8 @@ export default function App() {
                 <FileDown size={22} />
               </div>
               <div>
-                <h2 className="text-lg font-bold">Recibo Semanal - Cimento</h2>
-                <p className="text-xs text-slate-500">Atego 2425 • Selecione qualquer data da semana desejada (Seg-Sáb)</p>
+                <h2 className="text-lg font-bold">Recibo Semanal</h2>
+                <p className="text-xs text-slate-500">{selectedVehicle?.name} • Seg-Sáb da semana escolhida</p>
               </div>
             </div>
             <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Data de referência</label>
@@ -2674,7 +2674,11 @@ export default function App() {
               </button>
               <button
                 onClick={() => {
-                  generateCimentoWeeklyPDF(weeklyReceiptDate);
+                  if (selectedVehicle?.name.includes('Atego 2425')) {
+                    generateCimentoWeeklyPDF(weeklyReceiptDate);
+                  } else if (selectedVehicle) {
+                    generateWeeklyReceiptForVehicle(selectedVehicle, weeklyReceiptDate);
+                  }
                   setShowWeeklyReceiptDialog(false);
                 }}
                 className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700"
@@ -2685,6 +2689,53 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {showMonthlyReceiptDialog && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                <FileDown size={22} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">Recibo Mensal</h2>
+                <p className="text-xs text-slate-500">{selectedVehicle?.name}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div>
+                <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Mês</label>
+                <select value={monthlyReceiptMonth} onChange={(e) => setMonthlyReceiptMonth(parseInt(e.target.value))}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-indigo-400">
+                  {Array.from({length: 12}).map((_, i) => (
+                    <option key={i} value={i}>{format(new Date(2024, i), 'MMMM', { locale: ptBR })}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Ano</label>
+                <input type="number" value={monthlyReceiptYear} onChange={(e) => setMonthlyReceiptYear(parseInt(e.target.value) || new Date().getFullYear())}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-indigo-400" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowMonthlyReceiptDialog(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200">
+                Cancelar
+              </button>
+              <button onClick={() => {
+                  if (selectedVehicle) generateMonthlyReceiptForVehicle(selectedVehicle, monthlyReceiptMonth, monthlyReceiptYear);
+                  setShowMonthlyReceiptDialog(false);
+                }}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700">
+                Gerar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
 
 
