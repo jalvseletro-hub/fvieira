@@ -528,7 +528,14 @@ export default function App() {
       return acc + (s.quantity * price);
     }, 0);
 
-    const diesel = record.costs.dieselLiters * record.costs.dieselPrice;
+    const vehicleForCost = vehicles.find(v => v.id === record.vehicleId);
+    const isSaveiroGasVehicle = !!vehicleForCost?.name.toLowerCase().includes('saveiro');
+    // Para Saveiro Gás: combustível = soma dos R$ de gasolina lançados (gasolinaCost) + valor mensal opcional
+    const gasolinaServices = record.services.reduce((acc, s) => acc + (s.gasolinaCost || 0), 0);
+    const diesel = isSaveiroGasVehicle
+      ? (gasolinaServices > 0 ? gasolinaServices : (record.costs.gasolinaCost || 0))
+      : record.costs.dieselLiters * record.costs.dieselPrice;
+
     
     const driver1Services = record.services.filter(s => (s.driverId || 1) === 1);
     const driver2Services = record.services.filter(s => (s.driverId || 1) === 2);
