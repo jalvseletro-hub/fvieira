@@ -1904,14 +1904,24 @@ export default function App() {
                         <FileDown size={18} />
                         Recibo
                       </button>
-                      {selectedVehicle?.name.includes('Atego 2425') && (
+                      {selectedVehicle && (
                         <button
                           onClick={() => setShowWeeklyReceiptDialog(true)}
                           className="inline-flex items-center gap-2 bg-amber-50 border border-amber-100 hover:bg-amber-100 text-amber-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-                          title="Recibo Semanal - Cimento (Atego 2425)"
+                          title="Recibo Semanal (Seg-Sáb)"
                         >
                           <FileDown size={18} />
                           Recibo Semanal
+                        </button>
+                      )}
+                      {selectedVehicle && (
+                        <button
+                          onClick={() => setShowMonthlyReceiptDialog(true)}
+                          className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 text-emerald-700 px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
+                          title="Recibo Mensal"
+                        >
+                          <FileDown size={18} />
+                          Recibo Mensal
                         </button>
                       )}
                       <button
@@ -1944,9 +1954,14 @@ export default function App() {
                           <DropdownMenuItem onClick={() => generateReceiptPDF(activeRecord)}>
                             <FileDown size={16} className="mr-2" /> Recibo
                           </DropdownMenuItem>
-                          {selectedVehicle?.name.includes('Atego 2425') && (
+                          {selectedVehicle && (
                             <DropdownMenuItem onClick={() => setShowWeeklyReceiptDialog(true)}>
                               <FileDown size={16} className="mr-2" /> Recibo Semanal
+                            </DropdownMenuItem>
+                          )}
+                          {selectedVehicle && (
+                            <DropdownMenuItem onClick={() => setShowMonthlyReceiptDialog(true)}>
+                              <FileDown size={16} className="mr-2" /> Recibo Mensal
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem onClick={() => generateFleetPDF(activeRecord.month, activeRecord.year)}>
