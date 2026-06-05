@@ -2927,6 +2927,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setLunchCost(editingService.lunchCost?.toString() || '60');
       setPortCost(editingService.portCost?.toString() || '0');
       setDieselBuckets(editingService.dieselLiters ? (editingService.dieselLiters / 20).toString() : '0');
+      setGasolinaValue(editingService.gasolinaCost?.toString() || '0');
       setOvertimeHours(editingService.overtimeHours?.toString() || '0');
       setDriverId(editingService.driverId || 1);
       setAgentCommission(editingService.agentCommission?.toString() || '0');
@@ -2942,6 +2943,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setObservation('');
       setGasItems([]);
       setDieselBuckets('0');
+      setGasolinaValue('0');
       setOvertimeHours('0');
       setCimentoStops([]);
     }
