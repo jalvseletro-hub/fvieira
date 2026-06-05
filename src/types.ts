@@ -32,6 +32,7 @@ export interface ServiceEntry {
   driverId?: 1 | 2; // For vehicles with two drivers
   agentCommission?: number; // Specific commission for 'milho' services
   observation?: string; // Observação do motorista
+  gasolinaCost?: number; // Saveiro Gás: valor em R$ de gasolina abastecida
 }
 
 export interface MonthlyCosts {
