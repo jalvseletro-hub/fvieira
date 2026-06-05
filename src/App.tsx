@@ -251,7 +251,13 @@ export default function App() {
   const [editingService, setEditingService] = useState<{recordId: string, service: ServiceEntry} | null>(null);
   const [showAddService, setShowAddService] = useState(false);
   const [showWeeklyReceiptDialog, setShowWeeklyReceiptDialog] = useState(false);
+  const [showMonthlyReceiptDialog, setShowMonthlyReceiptDialog] = useState(false);
   const [weeklyReceiptDate, setWeeklyReceiptDate] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
+  const [monthlyReceiptMonth, setMonthlyReceiptMonth] = useState<number>(() => new Date().getMonth());
+  const [monthlyReceiptYear, setMonthlyReceiptYear] = useState<number>(() => new Date().getFullYear());
+  const [showDebtModal, setShowDebtModal] = useState(false);
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
+  const [debtToDelete, setDebtToDelete] = useState<string | null>(null);
 
   // Auto-select latest record for selected vehicle if none selected
   useEffect(() => {
