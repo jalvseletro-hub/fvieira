@@ -2994,6 +2994,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setGasItems([]);
       setCimentoStops([]);
       setDieselBuckets('0');
+      setGasolinaValue('0');
       setOvertimeHours('0');
       setAgentCommission('0');
       setDriverPayment('');
