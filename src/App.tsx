@@ -2893,6 +2893,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [lunchCost, setLunchCost] = useState<string>('60');
   const [portCost, setPortCost] = useState<string>('0');
   const [dieselBuckets, setDieselBuckets] = useState<string>('0');
+  const [gasolinaValue, setGasolinaValue] = useState<string>('0');
   const [overtimeHours, setOvertimeHours] = useState<string>('0');
   const [driverId, setDriverId] = useState<1 | 2>(1);
   const [agentCommission, setAgentCommission] = useState<string>('0');
@@ -2900,7 +2901,9 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [cimentoStops, setCimentoStops] = useState<CimentoStop[]>([]);
   const [showExtras, setShowExtras] = useState(false);
 
-  const isAtegoVehicle = vehicles.find(v => v.id === selectedVehicleId)?.name.includes('Atego 2425');
+  const selectedVehicleName = vehicles.find(v => v.id === selectedVehicleId)?.name || '';
+  const isAtegoVehicle = selectedVehicleName.includes('Atego 2425');
+  const isSaveiroGasVehicle = selectedVehicleName.toLowerCase().includes('saveiro');
 
   // Auto-default unitPrice when switching to milho/cimento (2.00 R$/saca)
   useEffect(() => {
