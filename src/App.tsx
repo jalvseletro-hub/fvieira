@@ -339,10 +339,16 @@ export default function App() {
       setDataLoaded(prev => ({ ...prev, settings: true }));
     }, (error) => handleFirestoreError(error, OperationType.GET, 'settings/company', false));
 
+    const unsubDebts = onSnapshot(collection(db, 'debts'), (snapshot) => {
+      const data = snapshot.docs.map((d: any) => d.data() as Debt);
+      setDebts(data);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'debts', false));
+
     return () => {
       unsubVehicles();
       unsubRecords();
       unsubSettings();
+      unsubDebts();
     };
   }, [user]);
 
