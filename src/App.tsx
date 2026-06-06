@@ -4217,3 +4217,113 @@ function PinModal({ vehicle, onClose, onSuccess }: {
     </div>
   );
 }
+
+function DebtModal({ debt, onClose, onSubmit }: {
+  debt?: Debt;
+  onClose: () => void;
+  onSubmit: (data: Omit<Debt, 'id' | 'createdAt' | 'updatedAt'>) => void;
+}) {
+  const [name, setName] = useState(debt?.name ?? '');
+  const [totalValue, setTotalValue] = useState<string>(debt?.totalValue?.toString() ?? '0');
+  const [totalInstallments, setTotalInstallments] = useState<string>(debt?.totalInstallments?.toString() ?? '1');
+  const [installmentValue, setInstallmentValue] = useState<string>(debt?.installmentValue?.toString() ?? '0');
+  const [paidInstallments, setPaidInstallments] = useState<string>(debt?.paidInstallments?.toString() ?? '0');
+  const [paymentDay, setPaymentDay] = useState<string>(debt?.paymentDay?.toString() ?? '5');
+  const [startDate, setStartDate] = useState(debt?.startDate ?? format(new Date(), 'yyyy-MM-dd'));
+  const [notes, setNotes] = useState(debt?.notes ?? '');
+
+  // Auto-calc installment value when total/parcelas mudam
+  useEffect(() => {
+    const t = parseFloat(totalValue) || 0;
+    const n = parseInt(totalInstallments) || 1;
+    if (t > 0 && n > 0) setInstallmentValue((t / n).toFixed(2));
+  }, [totalValue, totalInstallments]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSubmit({
+      name: name.trim(),
+      totalValue: parseFloat(totalValue) || 0,
+      totalInstallments: parseInt(totalInstallments) || 1,
+      installmentValue: parseFloat(installmentValue) || 0,
+      paidInstallments: Math.min(parseInt(paidInstallments) || 0, parseInt(totalInstallments) || 1),
+      paymentDay: Math.min(Math.max(parseInt(paymentDay) || 1, 1), 31),
+      startDate,
+      notes: notes.trim() || undefined,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl">
+        <form onSubmit={handleSubmit} className="p-8 space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">{debt ? 'Editar Dívida' : 'Nova Dívida'}</h2>
+            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+              <Plus className="rotate-45" size={22} />
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Nome / Credor</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} required
+              placeholder="Ex: Financiamento Banco X"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Valor Total (R$)</label>
+              <input type="number" step="0.01" value={totalValue} onChange={(e) => setTotalValue(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Nº de Parcelas</label>
+              <input type="number" min="1" value={totalInstallments} onChange={(e) => setTotalInstallments(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Valor da Parcela (R$)</label>
+              <input type="number" step="0.01" value={installmentValue} onChange={(e) => setInstallmentValue(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Parcelas Pagas</label>
+              <input type="number" min="0" value={paidInstallments} onChange={(e) => setPaidInstallments(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Dia Vencimento</label>
+              <input type="number" min="1" max="31" value={paymentDay} onChange={(e) => setPaymentDay(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Início</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Observações</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200">
+              Cancelar
+            </button>
+            <button type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700">
+              {debt ? 'Salvar' : 'Cadastrar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
