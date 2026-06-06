@@ -3557,6 +3557,10 @@ function RecordModal({ vehicleId, vehicles, record, onClose, onSubmit }: {
   const [maintenanceLabor, setMaintenanceLabor] = useState(record?.costs.maintenanceLabor ?? 0);
   const [overtimeHours, setOvertimeHours] = useState(record?.costs.overtimeHours ?? 0);
   const [overtimeRate, setOvertimeRate] = useState(record?.costs.overtimeRate ?? 0);
+  const [gasolinaCost, setGasolinaCost] = useState(record?.costs.gasolinaCost ?? 0);
+
+  const currentVehicleName = vehicles.find(v => v.id === (record?.vehicleId ?? vehicleId))?.name || '';
+  const isSaveiroVehicle = currentVehicleName.toLowerCase().includes('saveiro');
 
   // Client Info
   const [clientName, setClientName] = useState(record?.client?.name ?? '');
