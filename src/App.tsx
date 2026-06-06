@@ -50,6 +50,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn, formatCurrency, cleanObject } from './lib/utils';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 
 // Shared internal account used silently by the app for all users.
