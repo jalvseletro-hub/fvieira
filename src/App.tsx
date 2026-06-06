@@ -3675,7 +3675,8 @@ function RecordModal({ vehicleId, vehicles, record, onClose, onSubmit }: {
         maintenanceParts,
         maintenanceLabor,
         overtimeHours,
-        overtimeRate
+        overtimeRate,
+        gasolinaCost: isSaveiroVehicle ? gasolinaCost : undefined
       },
       client: clientName ? {
         name: clientName,
