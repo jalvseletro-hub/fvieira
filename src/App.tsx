@@ -21,7 +21,10 @@ import {
   RefreshCw,
   Building2,
   Pencil,
-  MoreHorizontal
+  MoreHorizontal,
+  Wallet,
+  Minus,
+  CheckCircle2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -47,6 +50,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn, formatCurrency, cleanObject } from './lib/utils';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 
 // Shared internal account used silently by the app for all users.
@@ -1782,6 +1786,19 @@ export default function App() {
                 Veículos
               </button>
               <button 
+                onClick={() => setActiveTab('debts')}
+                className={cn(
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'debts' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
+                )}
+              >
+                {activeTab === 'debts' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
+                <Wallet size={20} />
+                Dívidas
+              </button>
+              <button 
                 onClick={() => setActiveTab('settings')}
                 className={cn(
                   "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
@@ -2593,7 +2610,109 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {activeTab === 'debts' && isAdmin && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <header className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Dívidas da Empresa</h2>
+                <p className="text-slate-500">Acompanhe o progresso de cada parcelamento.</p>
+              </div>
+              <button
+                onClick={() => { setEditingDebtId(null); setShowDebtModal(true); }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+              >
+                <Plus size={18} /> Nova Dívida
+              </button>
+            </header>
+
+            {debts.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-12 text-center">
+                <Wallet size={40} className="mx-auto text-slate-300 mb-3" />
+                <p className="text-slate-500">Nenhuma dívida cadastrada ainda.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {debts.map(d => {
+                  const paid = d.paidInstallments * d.installmentValue;
+                  const progress = d.totalValue > 0 ? Math.min(100, (paid / d.totalValue) * 100) : 0;
+                  const remaining = Math.max(0, d.totalValue - paid);
+                  const done = d.paidInstallments >= d.totalInstallments;
+                  return (
+                    <div key={d.id} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-bold text-slate-900 text-lg leading-tight">{d.name}</h3>
+                          <p className="text-xs text-slate-500 mt-0.5">Vencimento dia {d.paymentDay} • {d.totalInstallments}x de R$ {d.installmentValue.toFixed(2)}</p>
+                        </div>
+                        {done && <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full"><CheckCircle2 size={12} /> Quitada</span>}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-600">{d.paidInstallments}/{d.totalInstallments} parcelas</span>
+                          <span className="font-bold text-indigo-600">{progress.toFixed(0)}%</span>
+                        </div>
+                        <Progress value={progress} />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="bg-slate-50 rounded-xl py-2">
+                          <p className="text-[10px] uppercase font-bold text-slate-400">Total</p>
+                          <p className="text-sm font-bold text-slate-900">R$ {d.totalValue.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-emerald-50 rounded-xl py-2">
+                          <p className="text-[10px] uppercase font-bold text-emerald-500">Pago</p>
+                          <p className="text-sm font-bold text-emerald-700">R$ {paid.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-rose-50 rounded-xl py-2">
+                          <p className="text-[10px] uppercase font-bold text-rose-500">Restante</p>
+                          <p className="text-sm font-bold text-rose-700">R$ {remaining.toFixed(2)}</p>
+                        </div>
+                      </div>
+
+                      {d.notes && <p className="text-xs text-slate-500 italic border-l-2 border-slate-200 pl-2">{d.notes}</p>}
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                        <button
+                          onClick={() => handleAdjustDebtPaid(d.id, -1)}
+                          disabled={d.paidInstallments <= 0}
+                          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center disabled:opacity-30"
+                          title="Desfazer parcela"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleAdjustDebtPaid(d.id, 1)}
+                          disabled={d.paidInstallments >= d.totalInstallments}
+                          className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40"
+                        >
+                          + Marcar Parcela Paga
+                        </button>
+                        <button
+                          onClick={() => { setEditingDebtId(d.id); setShowDebtModal(true); }}
+                          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center"
+                          title="Editar"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => setDebtToDelete(d.id)}
+                          className="w-8 h-8 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 flex items-center justify-center"
+                          title="Excluir"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
+
 
       {/* Modals */}
       {showRecordModal && (
@@ -2735,8 +2854,39 @@ export default function App() {
         </div>
       )}
 
+      {showDebtModal && (
+        <DebtModal
+          debt={editingDebtId ? debts.find(d => d.id === editingDebtId) : undefined}
+          onClose={() => { setShowDebtModal(false); setEditingDebtId(null); }}
+          onSubmit={(data) => handleSaveDebt(data, editingDebtId || undefined)}
+        />
+      )}
 
-
+      {debtToDelete && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={32} />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Excluir Dívida?</h2>
+            <p className="text-slate-500 mb-8">O histórico será removido permanentemente.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDebtToDelete(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDeleteDebt(debtToDelete)}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-rose-600 text-white hover:bg-rose-700"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
       {/* Mobile Bottom Navigation */}
@@ -2746,6 +2896,7 @@ export default function App() {
             { id: 'dashboard', label: isAdmin ? 'Painel' : 'Lançar', icon: LayoutDashboard, show: true },
             { id: 'history', label: 'Histórico', icon: History, show: isAdmin },
             { id: 'vehicles', label: 'Veículos', icon: Truck, show: isAdmin },
+            { id: 'debts', label: 'Dívidas', icon: Wallet, show: isAdmin },
             { id: 'settings', label: 'Ajustes', icon: Settings, show: isAdmin },
           ].filter(i => i.show).map(item => {
             const Icon = item.icon;
@@ -3406,6 +3557,10 @@ function RecordModal({ vehicleId, vehicles, record, onClose, onSubmit }: {
   const [maintenanceLabor, setMaintenanceLabor] = useState(record?.costs.maintenanceLabor ?? 0);
   const [overtimeHours, setOvertimeHours] = useState(record?.costs.overtimeHours ?? 0);
   const [overtimeRate, setOvertimeRate] = useState(record?.costs.overtimeRate ?? 0);
+  const [gasolinaCost, setGasolinaCost] = useState(record?.costs.gasolinaCost ?? 0);
+
+  const currentVehicleName = vehicles.find(v => v.id === (record?.vehicleId ?? vehicleId))?.name || '';
+  const isSaveiroVehicle = currentVehicleName.toLowerCase().includes('saveiro');
 
   // Client Info
   const [clientName, setClientName] = useState(record?.client?.name ?? '');
@@ -3520,7 +3675,8 @@ function RecordModal({ vehicleId, vehicles, record, onClose, onSubmit }: {
         maintenanceParts,
         maintenanceLabor,
         overtimeHours,
-        overtimeRate
+        overtimeRate,
+        gasolinaCost: isSaveiroVehicle ? gasolinaCost : undefined
       },
       client: clientName ? {
         name: clientName,
@@ -3659,7 +3815,11 @@ function RecordModal({ vehicleId, vehicles, record, onClose, onSubmit }: {
                 Custos do Mês
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <InputGroup label="Preço Diesel (R$)" value={dieselPrice} onChange={setDieselPrice} step={0.01} />
+                {isSaveiroVehicle ? (
+                  <InputGroup label="Gasolina Mensal (R$)" value={gasolinaCost} onChange={setGasolinaCost} step={0.01} />
+                ) : (
+                  <InputGroup label="Preço Diesel (R$)" value={dieselPrice} onChange={setDieselPrice} step={0.01} />
+                )}
                 <InputGroup label="Valor Diária (R$)" value={driverDailyRate} onChange={setDriverDailyRate} />
                 <InputGroup label="Imposto (%)" value={taxRate} onChange={setTaxRate} />
                 <InputGroup label="Manutenção Peças (R$)" value={maintenanceParts} onChange={setMaintenanceParts} />
@@ -4066,3 +4226,113 @@ function PinModal({ vehicle, onClose, onSuccess }: {
     </div>
   );
 }
+
+function DebtModal({ debt, onClose, onSubmit }: {
+  debt?: Debt;
+  onClose: () => void;
+  onSubmit: (data: Omit<Debt, 'id' | 'createdAt' | 'updatedAt'>) => void;
+}) {
+  const [name, setName] = useState(debt?.name ?? '');
+  const [totalValue, setTotalValue] = useState<string>(debt?.totalValue?.toString() ?? '0');
+  const [totalInstallments, setTotalInstallments] = useState<string>(debt?.totalInstallments?.toString() ?? '1');
+  const [installmentValue, setInstallmentValue] = useState<string>(debt?.installmentValue?.toString() ?? '0');
+  const [paidInstallments, setPaidInstallments] = useState<string>(debt?.paidInstallments?.toString() ?? '0');
+  const [paymentDay, setPaymentDay] = useState<string>(debt?.paymentDay?.toString() ?? '5');
+  const [startDate, setStartDate] = useState(debt?.startDate ?? format(new Date(), 'yyyy-MM-dd'));
+  const [notes, setNotes] = useState(debt?.notes ?? '');
+
+  // Auto-calc installment value when total/parcelas mudam
+  useEffect(() => {
+    const t = parseFloat(totalValue) || 0;
+    const n = parseInt(totalInstallments) || 1;
+    if (t > 0 && n > 0) setInstallmentValue((t / n).toFixed(2));
+  }, [totalValue, totalInstallments]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSubmit({
+      name: name.trim(),
+      totalValue: parseFloat(totalValue) || 0,
+      totalInstallments: parseInt(totalInstallments) || 1,
+      installmentValue: parseFloat(installmentValue) || 0,
+      paidInstallments: Math.min(parseInt(paidInstallments) || 0, parseInt(totalInstallments) || 1),
+      paymentDay: Math.min(Math.max(parseInt(paymentDay) || 1, 1), 31),
+      startDate,
+      notes: notes.trim() || undefined,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl">
+        <form onSubmit={handleSubmit} className="p-8 space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">{debt ? 'Editar Dívida' : 'Nova Dívida'}</h2>
+            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+              <Plus className="rotate-45" size={22} />
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Nome / Credor</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} required
+              placeholder="Ex: Financiamento Banco X"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Valor Total (R$)</label>
+              <input type="number" step="0.01" value={totalValue} onChange={(e) => setTotalValue(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Nº de Parcelas</label>
+              <input type="number" min="1" value={totalInstallments} onChange={(e) => setTotalInstallments(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Valor da Parcela (R$)</label>
+              <input type="number" step="0.01" value={installmentValue} onChange={(e) => setInstallmentValue(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Parcelas Pagas</label>
+              <input type="number" min="0" value={paidInstallments} onChange={(e) => setPaidInstallments(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Dia Vencimento</label>
+              <input type="number" min="1" max="31" value={paymentDay} onChange={(e) => setPaymentDay(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Início</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Observações</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200">
+              Cancelar
+            </button>
+            <button type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700">
+              {debt ? 'Salvar' : 'Cadastrar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
