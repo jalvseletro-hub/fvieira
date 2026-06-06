@@ -3815,7 +3815,11 @@ function RecordModal({ vehicleId, vehicles, record, onClose, onSubmit }: {
                 Custos do Mês
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <InputGroup label="Preço Diesel (R$)" value={dieselPrice} onChange={setDieselPrice} step={0.01} />
+                {isSaveiroVehicle ? (
+                  <InputGroup label="Gasolina Mensal (R$)" value={gasolinaCost} onChange={setGasolinaCost} step={0.01} />
+                ) : (
+                  <InputGroup label="Preço Diesel (R$)" value={dieselPrice} onChange={setDieselPrice} step={0.01} />
+                )}
                 <InputGroup label="Valor Diária (R$)" value={driverDailyRate} onChange={setDriverDailyRate} />
                 <InputGroup label="Imposto (%)" value={taxRate} onChange={setTaxRate} />
                 <InputGroup label="Manutenção Peças (R$)" value={maintenanceParts} onChange={setMaintenanceParts} />
