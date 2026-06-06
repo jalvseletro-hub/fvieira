@@ -479,8 +479,10 @@ export default function App() {
   };
 
   const handlePlateAccess = () => {
-    const v = vehicles.find(v => (v.plate || '').toLowerCase() === plateInput.trim().toLowerCase());
-    if (v) {
+    const normalize = (s: string) => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const input = normalize(plateInput);
+    const v = vehicles.find(v => normalize(v.plate || '') === input);
+    if (v && input) {
       setCurrentUserVehicleId(v.id);
       setUserRole('driver');
       setAccessError('');
@@ -2096,7 +2098,7 @@ export default function App() {
                           <PieChart>
                             <Pie
                               data={[
-                                { name: 'Diesel', value: stats.diesel, color: '#0f172a' },
+                                { name: (selectedVehicle?.name || '').toLowerCase().includes('saveiro') ? 'Gasolina' : 'Diesel', value: stats.diesel, color: '#0f172a' },
                                 ...(stats.driver1Days > 0 ? [{ name: 'Motorista 1', value: stats.driver1TotalCost, color: '#16a34a' }] : []),
                                 ...(stats.driver2Days > 0 ? [{ name: 'Motorista 2', value: stats.driver2TotalCost, color: '#ca8a04' }] : []),
                                 ...(stats.driver1Days === 0 && stats.driver2Days === 0 ? [{ name: 'Motorista', value: stats.driverBase, color: '#16a34a' }] : []),
@@ -2114,7 +2116,7 @@ export default function App() {
                               dataKey="value"
                             >
                               {[
-                                { name: 'Diesel', value: stats.diesel, color: '#0f172a' },
+                                { name: (selectedVehicle?.name || '').toLowerCase().includes('saveiro') ? 'Gasolina' : 'Diesel', value: stats.diesel, color: '#0f172a' },
                                 ...(stats.driver1Days > 0 ? [{ name: 'Motorista 1', value: stats.driver1TotalCost, color: '#16a34a' }] : []),
                                 ...(stats.driver2Days > 0 ? [{ name: 'Motorista 2', value: stats.driver2TotalCost, color: '#ca8a04' }] : []),
                                 ...(stats.driver1Days === 0 && stats.driver2Days === 0 ? [{ name: 'Motorista', value: stats.driverBase, color: '#16a34a' }] : []),
@@ -2136,7 +2138,7 @@ export default function App() {
                         </ResponsiveContainer>
                       </div>
                         <div className="mt-4 space-y-3">
-                          <CostItem label="Diesel" value={stats.diesel} color="bg-slate-900" />
+                          <CostItem label={(selectedVehicle?.name || '').toLowerCase().includes('saveiro') ? 'Gasolina' : 'Diesel'} value={stats.diesel} color="bg-slate-900" />
                           
                           {stats.driver1Days > 0 && (
                             <CostItem 
