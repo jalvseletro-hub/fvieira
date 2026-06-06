@@ -2609,7 +2609,109 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {activeTab === 'debts' && isAdmin && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <header className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Dívidas da Empresa</h2>
+                <p className="text-slate-500">Acompanhe o progresso de cada parcelamento.</p>
+              </div>
+              <button
+                onClick={() => { setEditingDebtId(null); setShowDebtModal(true); }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+              >
+                <Plus size={18} /> Nova Dívida
+              </button>
+            </header>
+
+            {debts.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-12 text-center">
+                <Wallet size={40} className="mx-auto text-slate-300 mb-3" />
+                <p className="text-slate-500">Nenhuma dívida cadastrada ainda.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {debts.map(d => {
+                  const paid = d.paidInstallments * d.installmentValue;
+                  const progress = d.totalValue > 0 ? Math.min(100, (paid / d.totalValue) * 100) : 0;
+                  const remaining = Math.max(0, d.totalValue - paid);
+                  const done = d.paidInstallments >= d.totalInstallments;
+                  return (
+                    <div key={d.id} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-bold text-slate-900 text-lg leading-tight">{d.name}</h3>
+                          <p className="text-xs text-slate-500 mt-0.5">Vencimento dia {d.paymentDay} • {d.totalInstallments}x de R$ {d.installmentValue.toFixed(2)}</p>
+                        </div>
+                        {done && <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full"><CheckCircle2 size={12} /> Quitada</span>}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-600">{d.paidInstallments}/{d.totalInstallments} parcelas</span>
+                          <span className="font-bold text-indigo-600">{progress.toFixed(0)}%</span>
+                        </div>
+                        <Progress value={progress} />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="bg-slate-50 rounded-xl py-2">
+                          <p className="text-[10px] uppercase font-bold text-slate-400">Total</p>
+                          <p className="text-sm font-bold text-slate-900">R$ {d.totalValue.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-emerald-50 rounded-xl py-2">
+                          <p className="text-[10px] uppercase font-bold text-emerald-500">Pago</p>
+                          <p className="text-sm font-bold text-emerald-700">R$ {paid.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-rose-50 rounded-xl py-2">
+                          <p className="text-[10px] uppercase font-bold text-rose-500">Restante</p>
+                          <p className="text-sm font-bold text-rose-700">R$ {remaining.toFixed(2)}</p>
+                        </div>
+                      </div>
+
+                      {d.notes && <p className="text-xs text-slate-500 italic border-l-2 border-slate-200 pl-2">{d.notes}</p>}
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                        <button
+                          onClick={() => handleAdjustDebtPaid(d.id, -1)}
+                          disabled={d.paidInstallments <= 0}
+                          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center disabled:opacity-30"
+                          title="Desfazer parcela"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleAdjustDebtPaid(d.id, 1)}
+                          disabled={d.paidInstallments >= d.totalInstallments}
+                          className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40"
+                        >
+                          + Marcar Parcela Paga
+                        </button>
+                        <button
+                          onClick={() => { setEditingDebtId(d.id); setShowDebtModal(true); }}
+                          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center"
+                          title="Editar"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => setDebtToDelete(d.id)}
+                          className="w-8 h-8 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 flex items-center justify-center"
+                          title="Excluir"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
+
 
       {/* Modals */}
       {showRecordModal && (
