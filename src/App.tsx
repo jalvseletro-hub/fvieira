@@ -3154,6 +3154,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setAgentCommission(editingService.agentCommission?.toString() || '0');
       setObservation(editingService.observation || '');
       setCimentoStops(editingService.cimentoStops || []);
+      setNoTax(!!editingService.noTax);
     } else {
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setType('normal');
@@ -3167,6 +3168,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setGasolinaValue('0');
       setOvertimeHours('0');
       setCimentoStops([]);
+      setNoTax(false);
     }
   }, [editingService, selectedVehicleId]);
 
