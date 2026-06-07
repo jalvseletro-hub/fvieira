@@ -63,6 +63,20 @@ export interface Debt {
   updatedAt: string;
 }
 
+export interface Employee {
+  id: string;
+  name: string;
+  role?: string; // cargo / função
+  salary: number;
+  paymentDay?: number; // dia do pagamento (1-31)
+  hireDate?: string; // ISO yyyy-mm-dd
+  phone?: string;
+  notes?: string;
+  active?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ClientInfo {
   name: string;
   cnpj?: string;
