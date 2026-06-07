@@ -4544,3 +4544,108 @@ function DebtModal({ debt, onClose, onSubmit }: {
   );
 }
 
+
+function EmployeeModal({ employee, onClose, onSubmit }: {
+  employee?: Employee;
+  onClose: () => void;
+  onSubmit: (data: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>) => void;
+}) {
+  const [name, setName] = useState(employee?.name ?? '');
+  const [role, setRole] = useState(employee?.role ?? '');
+  const [salary, setSalary] = useState<string>(employee?.salary?.toString() ?? '0');
+  const [paymentDay, setPaymentDay] = useState<string>(employee?.paymentDay?.toString() ?? '5');
+  const [hireDate, setHireDate] = useState(employee?.hireDate ?? '');
+  const [phone, setPhone] = useState(employee?.phone ?? '');
+  const [notes, setNotes] = useState(employee?.notes ?? '');
+  const [active, setActive] = useState<boolean>(employee?.active !== false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSubmit({
+      name: name.trim(),
+      role: role.trim() || undefined,
+      salary: parseFloat(salary) || 0,
+      paymentDay: Math.min(Math.max(parseInt(paymentDay) || 1, 1), 31),
+      hireDate: hireDate || undefined,
+      phone: phone.trim() || undefined,
+      notes: notes.trim() || undefined,
+      active,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl">
+        <form onSubmit={handleSubmit} className="p-8 space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">{employee ? 'Editar Funcionário' : 'Novo Funcionário'}</h2>
+            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+              <Plus className="rotate-45" size={22} />
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Nome</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} required
+              placeholder="Ex: João da Silva"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Cargo / Função</label>
+            <input value={role} onChange={(e) => setRole(e.target.value)}
+              placeholder="Ex: Motorista, Ajudante"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Salário (R$)</label>
+              <input type="number" step="0.01" value={salary} onChange={(e) => setSalary(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Dia Pagamento</label>
+              <input type="number" min="1" max="31" value={paymentDay} onChange={(e) => setPaymentDay(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Admissão</label>
+              <input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-slate-500">Telefone</label>
+              <input value={phone} onChange={(e) => setPhone(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Observações</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+            Funcionário ativo
+          </label>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200">
+              Cancelar
+            </button>
+            <button type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700">
+              {employee ? 'Salvar' : 'Cadastrar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
