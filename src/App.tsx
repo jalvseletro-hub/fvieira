@@ -3462,6 +3462,21 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all font-medium placeholder:text-white/30"
           />
         </div>
+        {!isDriver && (
+          <div className="flex items-end sm:col-span-2">
+            <label className="flex items-center gap-2 cursor-pointer select-none px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all w-full">
+              <input
+                type="checkbox"
+                checked={noTax}
+                onChange={(e) => setNoTax(e.target.checked)}
+                className="w-4 h-4 accent-amber-400"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider text-indigo-100">
+                Sem imposto (nota sem retenção)
+              </span>
+            </label>
+          </div>
+        )}
       </div>
       )}
 
