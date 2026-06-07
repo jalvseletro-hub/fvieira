@@ -71,7 +71,8 @@ import {
   GasItem,
   CimentoStop,
   CompanySettings,
-  Debt
+  Debt,
+  Employee
 } from './types';
 import { 
   auth, 
