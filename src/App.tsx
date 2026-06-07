@@ -24,7 +24,8 @@ import {
   MoreHorizontal,
   Wallet,
   Minus,
-  CheckCircle2
+  CheckCircle2,
+  Users
 } from 'lucide-react';
 import {
   DropdownMenu,
