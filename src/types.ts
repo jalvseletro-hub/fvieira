@@ -33,6 +33,7 @@ export interface ServiceEntry {
   agentCommission?: number; // Specific commission for 'milho' services
   observation?: string; // Observação do motorista
   gasolinaCost?: number; // Saveiro Gás: valor em R$ de gasolina abastecida
+  noTax?: boolean; // Quando true, o serviço não entra no cálculo de impostos
 }
 
 export interface MonthlyCosts {

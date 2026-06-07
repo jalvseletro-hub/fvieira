@@ -530,6 +530,7 @@ export default function App() {
     // Revenue subject to tax
     const taxableRevenue = record.services.reduce((acc, s) => {
       if (s.type === 'milho' || s.type === 'gas' || s.type === 'frete_avulso' || s.type === 'aleatorio') return acc;
+      if (s.noTax) return acc;
       const price = s.type === 'cimento' ? (s.unitPrice || 0) : PRICES[s.type as keyof typeof PRICES];
       return acc + (s.quantity * price);
     }, 0);
@@ -3118,6 +3119,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [agentCommission, setAgentCommission] = useState<string>('0');
   const [observation, setObservation] = useState<string>('');
   const [cimentoStops, setCimentoStops] = useState<CimentoStop[]>([]);
+  const [noTax, setNoTax] = useState<boolean>(false);
   const [showExtras, setShowExtras] = useState(false);
 
   const selectedVehicleName = vehicles.find(v => v.id === selectedVehicleId)?.name || '';
@@ -3152,6 +3154,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setAgentCommission(editingService.agentCommission?.toString() || '0');
       setObservation(editingService.observation || '');
       setCimentoStops(editingService.cimentoStops || []);
+      setNoTax(!!editingService.noTax);
     } else {
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setType('normal');
@@ -3165,6 +3168,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setGasolinaValue('0');
       setOvertimeHours('0');
       setCimentoStops([]);
+      setNoTax(false);
     }
   }, [editingService, selectedVehicleId]);
 
@@ -3203,7 +3207,8 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       overtimeHours: parseFloat(overtimeHours) || 0,
       driverId,
       agentCommission: type === 'milho' ? (parseFloat(agentCommission) || 0) : undefined,
-      observation: observation.trim() || undefined
+      observation: observation.trim() || undefined,
+      noTax: noTax || undefined
     };
 
     if (editingService && onEdit) {
@@ -3218,6 +3223,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setAgentCommission('0');
       setDriverPayment('');
       setObservation('');
+      setNoTax(false);
     }
   };
 
@@ -3362,8 +3368,8 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
                     type="text"
                     placeholder={`Loja ${idx + 1}`}
                     value={stop.storeName}
-                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, storeName: e.target.value } : s))}
-                    className="col-span-5 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all placeholder:text-white/30"
+                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, storeName: e.target.value.toUpperCase() } : s))}
+                    className="col-span-5 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all placeholder:text-white/30 uppercase"
                   />
                   <select
                     value={stop.location}
@@ -3456,6 +3462,21 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white/20 transition-all font-medium placeholder:text-white/30"
           />
         </div>
+        {!isDriver && (
+          <div className="flex items-end sm:col-span-2">
+            <label className="flex items-center gap-2 cursor-pointer select-none px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all w-full">
+              <input
+                type="checkbox"
+                checked={noTax}
+                onChange={(e) => setNoTax(e.target.checked)}
+                className="w-4 h-4 accent-amber-400"
+              />
+              <span className="text-xs font-bold uppercase tracking-wider text-indigo-100">
+                Sem imposto (nota sem retenção)
+              </span>
+            </label>
+          </div>
+        )}
       </div>
       )}
 
