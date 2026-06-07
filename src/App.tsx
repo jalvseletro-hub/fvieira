@@ -3223,6 +3223,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       setAgentCommission('0');
       setDriverPayment('');
       setObservation('');
+      setNoTax(false);
     }
   };
 
