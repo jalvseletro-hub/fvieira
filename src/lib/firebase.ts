@@ -90,7 +90,7 @@ export const db = { __isShim: true };
 type CollectionRef = { __kind: "collection"; name: CollectionName };
 type DocRef = { __kind: "doc"; name: CollectionName; id: string };
 
-type CollectionName = "vehicles" | "records" | "settings" | "debts";
+type CollectionName = "vehicles" | "records" | "settings" | "debts" | "employees";
 
 export function collection(_db: any, name: CollectionName): CollectionRef {
   return { __kind: "collection", name };
@@ -193,6 +193,35 @@ function rowToDebt(r: any) {
     updatedAt: r.updated_at,
   };
 }
+function employeeToRow(e: any, userId: string) {
+  return {
+    id: e.id,
+    user_id: userId,
+    name: e.name,
+    role: e.role ?? null,
+    salary: Number(e.salary) || 0,
+    payment_day: Number(e.paymentDay) || 5,
+    hire_date: e.hireDate || null,
+    phone: e.phone ?? null,
+    notes: e.notes ?? null,
+    active: e.active !== false,
+  };
+}
+function rowToEmployee(r: any) {
+  return {
+    id: r.id,
+    name: r.name,
+    role: r.role ?? undefined,
+    salary: Number(r.salary) || 0,
+    paymentDay: Number(r.payment_day) || 5,
+    hireDate: r.hire_date ?? undefined,
+    phone: r.phone ?? undefined,
+    notes: r.notes ?? undefined,
+    active: r.active !== false,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
 function uid(): string {
   if (!_currentUser) throw new Error("Not authenticated");
@@ -223,6 +252,11 @@ export async function setDoc(ref: DocRef, data: any) {
       .from("debts" as any)
       .upsert(debtToRow({ ...data, id: ref.id }, userId));
     if (error) throw error;
+  } else if (ref.name === "employees") {
+    const { error } = await supabase
+      .from("employees" as any)
+      .upsert(employeeToRow({ ...data, id: ref.id }, userId));
+    if (error) throw error;
   }
 }
 
@@ -235,6 +269,9 @@ export async function deleteDoc(ref: DocRef) {
     if (error) throw error;
   } else if (ref.name === "debts") {
     const { error } = await supabase.from("debts" as any).delete().eq("id", ref.id);
+    if (error) throw error;
+  } else if (ref.name === "employees") {
+    const { error } = await supabase.from("employees" as any).delete().eq("id", ref.id);
     if (error) throw error;
   }
 }
@@ -294,6 +331,12 @@ export async function getDocs(ref: CollectionRef) {
       const d = rowToDebt(r);
       docs.push({ id: d.id, data: () => d });
     });
+  } else if (ref.name === "employees") {
+    const { data } = await supabase.from("employees" as any).select("*").order("created_at");
+    (data ?? []).forEach((r: any) => {
+      const e = rowToEmployee(r);
+      docs.push({ id: e.id, data: () => e });
+    });
   }
   return { docs };
 }
@@ -331,6 +374,7 @@ export function onSnapshot(
     records: "month_records",
     settings: "company_settings",
     debts: "debts",
+    employees: "employees",
   };
   const table = tableMap[ref.__kind === "collection" ? ref.name : ref.name];
   const channel = supabase
