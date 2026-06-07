@@ -216,6 +216,7 @@ export default function App() {
   const [records, setRecords] = useState<MonthRecord[]>([]);
   const [settings, setSettings] = useState<CompanySettings>(INITIAL_SETTINGS);
   const [debts, setDebts] = useState<Debt[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [dataLoaded, setDataLoaded] = useState({
     vehicles: false,
     records: false,
