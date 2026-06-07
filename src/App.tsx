@@ -503,7 +503,7 @@ export default function App() {
     }
   };
 
-
+  const handleAdminAccess = () => {
     const u = adminUserInput.trim();
     const p = adminPassInput;
     const match = ADMIN_USERS.find(a => a.user.toLowerCase() === u.toLowerCase() && a.pass === p);
