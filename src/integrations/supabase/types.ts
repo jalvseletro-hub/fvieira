@@ -95,6 +95,51 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          active: boolean
+          created_at: string
+          hire_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          payment_day: number
+          phone: string | null
+          role: string | null
+          salary: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          hire_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          payment_day?: number
+          phone?: string | null
+          role?: string | null
+          salary?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          hire_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          payment_day?: number
+          phone?: string | null
+          role?: string | null
+          salary?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       month_records: {
         Row: {
           client: Json | null
