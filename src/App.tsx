@@ -3119,6 +3119,7 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
   const [agentCommission, setAgentCommission] = useState<string>('0');
   const [observation, setObservation] = useState<string>('');
   const [cimentoStops, setCimentoStops] = useState<CimentoStop[]>([]);
+  const [noTax, setNoTax] = useState<boolean>(false);
   const [showExtras, setShowExtras] = useState(false);
 
   const selectedVehicleName = vehicles.find(v => v.id === selectedVehicleId)?.name || '';
