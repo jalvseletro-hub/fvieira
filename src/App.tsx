@@ -474,8 +474,36 @@ export default function App() {
     }
   };
 
+  // ===== Funcionários (apenas admin) =====
+  const handleSaveEmployee = async (data: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>, id?: string) => {
+    try {
+      const empId = id || crypto.randomUUID();
+      const existing = id ? employees.find(e => e.id === id) : undefined;
+      const now = new Date().toISOString();
+      const emp: Employee = {
+        ...data,
+        id: empId,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+      };
+      await setDoc(doc(db, 'employees', empId), cleanObject(emp));
+      setShowEmployeeModal(false);
+      setEditingEmployeeId(null);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, `employees/${id || 'new'}`);
+    }
+  };
 
-  const handleAdminAccess = () => {
+  const handleDeleteEmployee = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'employees', id));
+      setEmployeeToDelete(null);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `employees/${id}`);
+    }
+  };
+
+
     const u = adminUserInput.trim();
     const p = adminPassInput;
     const match = ADMIN_USERS.find(a => a.user.toLowerCase() === u.toLowerCase() && a.pass === p);
