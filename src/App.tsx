@@ -234,7 +234,7 @@ export default function App() {
 
   const isDataReady = forceReady || (dataLoaded.vehicles && dataLoaded.records && dataLoaded.settings);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'vehicles' | 'settings' | 'debts'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'vehicles' | 'settings' | 'debts' | 'employees'>('dashboard');
   const [userRole, setUserRole] = useState<'none' | 'admin' | 'driver'>(() => {
     if (typeof window === 'undefined') return 'none';
     const stored = localStorage.getItem('ms_user_role');
