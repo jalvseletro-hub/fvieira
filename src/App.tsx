@@ -530,6 +530,7 @@ export default function App() {
     // Revenue subject to tax
     const taxableRevenue = record.services.reduce((acc, s) => {
       if (s.type === 'milho' || s.type === 'gas' || s.type === 'frete_avulso' || s.type === 'aleatorio') return acc;
+      if (s.noTax) return acc;
       const price = s.type === 'cimento' ? (s.unitPrice || 0) : PRICES[s.type as keyof typeof PRICES];
       return acc + (s.quantity * price);
     }, 0);
