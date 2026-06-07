@@ -331,6 +331,12 @@ export async function getDocs(ref: CollectionRef) {
       const d = rowToDebt(r);
       docs.push({ id: d.id, data: () => d });
     });
+  } else if (ref.name === "employees") {
+    const { data } = await supabase.from("employees" as any).select("*").order("created_at");
+    (data ?? []).forEach((r: any) => {
+      const e = rowToEmployee(r);
+      docs.push({ id: e.id, data: () => e });
+    });
   }
   return { docs };
 }
