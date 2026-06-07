@@ -355,11 +355,17 @@ export default function App() {
       setDebts(data);
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'debts', false));
 
+    const unsubEmployees = onSnapshot(collection(db, 'employees'), (snapshot) => {
+      const data = snapshot.docs.map((d: any) => d.data() as Employee);
+      setEmployees(data);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'employees', false));
+
     return () => {
       unsubVehicles();
       unsubRecords();
       unsubSettings();
       unsubDebts();
+      unsubEmployees();
     };
   }, [user]);
 
