@@ -193,6 +193,35 @@ function rowToDebt(r: any) {
     updatedAt: r.updated_at,
   };
 }
+function employeeToRow(e: any, userId: string) {
+  return {
+    id: e.id,
+    user_id: userId,
+    name: e.name,
+    role: e.role ?? null,
+    salary: Number(e.salary) || 0,
+    payment_day: Number(e.paymentDay) || 5,
+    hire_date: e.hireDate || null,
+    phone: e.phone ?? null,
+    notes: e.notes ?? null,
+    active: e.active !== false,
+  };
+}
+function rowToEmployee(r: any) {
+  return {
+    id: r.id,
+    name: r.name,
+    role: r.role ?? undefined,
+    salary: Number(r.salary) || 0,
+    paymentDay: Number(r.payment_day) || 5,
+    hireDate: r.hire_date ?? undefined,
+    phone: r.phone ?? undefined,
+    notes: r.notes ?? undefined,
+    active: r.active !== false,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
 function uid(): string {
   if (!_currentUser) throw new Error("Not authenticated");
