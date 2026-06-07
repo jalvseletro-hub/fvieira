@@ -2768,7 +2768,103 @@ export default function App() {
             )}
           </div>
         )}
+
+        {activeTab === 'employees' && isAdmin && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <header className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Funcionários</h2>
+                <p className="text-slate-500">Cadastro de funcionários e salários da empresa.</p>
+              </div>
+              <button
+                onClick={() => { setEditingEmployeeId(null); setShowEmployeeModal(true); }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+              >
+                <Plus size={18} /> Novo Funcionário
+              </button>
+            </header>
+
+            {employees.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-12 text-center">
+                <Users size={40} className="mx-auto text-slate-300 mb-3" />
+                <p className="text-slate-500">Nenhum funcionário cadastrado ainda.</p>
+              </div>
+            ) : (
+              <>
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase font-bold text-slate-400">Folha de pagamento mensal</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        R$ {employees.filter(e => e.active !== false).reduce((s, e) => s + (e.salary || 0), 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs uppercase font-bold text-slate-400">Ativos</p>
+                      <p className="text-2xl font-bold text-indigo-600">
+                        {employees.filter(e => e.active !== false).length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {employees.map(emp => (
+                    <div key={emp.id} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-bold text-slate-900 text-lg leading-tight">{emp.name}</h3>
+                          {emp.role && <p className="text-xs text-slate-500 mt-0.5">{emp.role}</p>}
+                        </div>
+                        {emp.active === false && (
+                          <span className="inline-flex items-center text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">Inativo</span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-emerald-50 rounded-xl py-2 px-3">
+                          <p className="text-[10px] uppercase font-bold text-emerald-500">Salário</p>
+                          <p className="text-sm font-bold text-emerald-700">R$ {emp.salary.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-slate-50 rounded-xl py-2 px-3">
+                          <p className="text-[10px] uppercase font-bold text-slate-400">Pagamento</p>
+                          <p className="text-sm font-bold text-slate-900">Dia {emp.paymentDay ?? '-'}</p>
+                        </div>
+                      </div>
+
+                      {(emp.phone || emp.hireDate) && (
+                        <div className="text-xs text-slate-500 space-y-0.5">
+                          {emp.hireDate && <p>Admissão: {format(parseISO(emp.hireDate), 'dd/MM/yyyy')}</p>}
+                          {emp.phone && <p>Tel: {emp.phone}</p>}
+                        </div>
+                      )}
+
+                      {emp.notes && <p className="text-xs text-slate-500 italic border-l-2 border-slate-200 pl-2">{emp.notes}</p>}
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                        <button
+                          onClick={() => { setEditingEmployeeId(emp.id); setShowEmployeeModal(true); }}
+                          className="flex-1 px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center gap-1"
+                        >
+                          <Pencil size={14} /> Editar
+                        </button>
+                        <button
+                          onClick={() => setEmployeeToDelete(emp.id)}
+                          className="w-9 h-9 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 flex items-center justify-center"
+                          title="Excluir"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </main>
+
 
 
       {/* Modals */}
