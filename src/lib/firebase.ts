@@ -270,6 +270,9 @@ export async function deleteDoc(ref: DocRef) {
   } else if (ref.name === "debts") {
     const { error } = await supabase.from("debts" as any).delete().eq("id", ref.id);
     if (error) throw error;
+  } else if (ref.name === "employees") {
+    const { error } = await supabase.from("employees" as any).delete().eq("id", ref.id);
+    if (error) throw error;
   }
 }
 
