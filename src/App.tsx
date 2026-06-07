@@ -1843,6 +1843,19 @@ export default function App() {
                 Dívidas
               </button>
               <button 
+                onClick={() => setActiveTab('employees')}
+                className={cn(
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'employees' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
+                )}
+              >
+                {activeTab === 'employees' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
+                <Users size={20} />
+                Funcionários
+              </button>
+              <button 
                 onClick={() => setActiveTab('settings')}
                 className={cn(
                   "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
