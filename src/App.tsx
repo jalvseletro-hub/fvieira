@@ -265,6 +265,10 @@ export default function App() {
   const [showDebtModal, setShowDebtModal] = useState(false);
   const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
   const [debtToDelete, setDebtToDelete] = useState<string | null>(null);
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
+
 
   // Auto-select latest record for selected vehicle if none selected
   useEffect(() => {
