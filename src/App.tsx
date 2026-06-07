@@ -3207,7 +3207,8 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
       overtimeHours: parseFloat(overtimeHours) || 0,
       driverId,
       agentCommission: type === 'milho' ? (parseFloat(agentCommission) || 0) : undefined,
-      observation: observation.trim() || undefined
+      observation: observation.trim() || undefined,
+      noTax: noTax || undefined
     };
 
     if (editingService && onEdit) {
