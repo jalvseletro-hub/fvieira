@@ -3363,8 +3363,8 @@ function QuickAddService({ vehicles, selectedVehicleId, onAdd, isDriver, editing
                     type="text"
                     placeholder={`Loja ${idx + 1}`}
                     value={stop.storeName}
-                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, storeName: e.target.value } : s))}
-                    className="col-span-5 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all placeholder:text-white/30"
+                    onChange={(e) => setCimentoStops(prev => prev.map(s => s.id === stop.id ? { ...s, storeName: e.target.value.toUpperCase() } : s))}
+                    className="col-span-5 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all placeholder:text-white/30 uppercase"
                   />
                   <select
                     value={stop.location}
