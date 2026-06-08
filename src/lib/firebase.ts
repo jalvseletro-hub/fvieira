@@ -365,6 +365,12 @@ export async function getDocs(ref: CollectionRef) {
       const e = rowToEmployee(r);
       docs.push({ id: e.id, data: () => e });
     });
+  } else if (ref.name === "sales") {
+    const { data } = await supabase.from("sales" as any).select("*").order("sale_date", { ascending: false });
+    (data ?? []).forEach((r: any) => {
+      const s = rowToSale(r);
+      docs.push({ id: s.id, data: () => s });
+    });
   }
   return { docs };
 }
