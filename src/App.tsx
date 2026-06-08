@@ -3152,6 +3152,8 @@ export default function App() {
             { id: 'vehicles', label: 'Veículos', icon: Truck, show: isAdmin },
             { id: 'debts', label: 'Dívidas', icon: Wallet, show: isAdmin },
             { id: 'employees', label: 'Equipe', icon: Users, show: isAdmin },
+            { id: 'sales', label: 'Vendas', icon: ShoppingCart, show: isAdmin },
+            { id: 'overview', label: 'Resumo', icon: BarChart3, show: isAdmin },
             { id: 'settings', label: 'Ajustes', icon: Settings, show: isAdmin },
           ].filter(i => i.show).map(item => {
             const Icon = item.icon;
