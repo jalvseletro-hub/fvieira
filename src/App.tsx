@@ -1897,6 +1897,32 @@ export default function App() {
                 Funcionários
               </button>
               <button 
+                onClick={() => setActiveTab('sales')}
+                className={cn(
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'sales' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
+                )}
+              >
+                {activeTab === 'sales' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
+                <ShoppingCart size={20} />
+                Vendas
+              </button>
+              <button 
+                onClick={() => setActiveTab('overview')}
+                className={cn(
+                  "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  activeTab === 'overview' 
+                    ? "bg-gradient-to-r from-indigo-50 to-indigo-50/50 text-indigo-700 font-semibold shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:translate-x-1"
+                )}
+              >
+                {activeTab === 'overview' && <span className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-600 rounded-r-full" />}
+                <BarChart3 size={20} />
+                Resumo Geral
+              </button>
+              <button 
                 onClick={() => setActiveTab('settings')}
                 className={cn(
                   "relative w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
