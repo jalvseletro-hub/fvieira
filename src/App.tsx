@@ -516,6 +516,34 @@ export default function App() {
     }
   };
 
+  const handleSaveSale = async (data: Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>, id?: string) => {
+    try {
+      const saleId = id || crypto.randomUUID();
+      const existing = id ? sales.find(s => s.id === id) : undefined;
+      const now = new Date().toISOString();
+      const sale: Sale = {
+        ...data,
+        id: saleId,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+      };
+      await setDoc(doc(db, 'sales', saleId), cleanObject(sale));
+      setShowSaleModal(false);
+      setEditingSaleId(null);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, `sales/${id || 'new'}`);
+    }
+  };
+
+  const handleDeleteSale = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'sales', id));
+      setSaleToDelete(null);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `sales/${id}`);
+    }
+  };
+
   const handleAdminAccess = () => {
     const u = adminUserInput.trim();
     const p = adminPassInput;
