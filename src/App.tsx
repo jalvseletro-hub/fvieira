@@ -74,7 +74,8 @@ import {
   CimentoStop,
   CompanySettings,
   Debt,
-  Employee
+  Employee,
+  Sale
 } from './types';
 import { 
   auth, 
