@@ -3408,6 +3408,41 @@ export default function App() {
         </div>
       )}
 
+      {showSaleModal && (
+        <SaleModal
+          sale={editingSaleId ? sales.find(s => s.id === editingSaleId) : undefined}
+          onClose={() => { setShowSaleModal(false); setEditingSaleId(null); }}
+          onSubmit={(data) => handleSaveSale(data, editingSaleId || undefined)}
+        />
+      )}
+
+      {saleToDelete && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={32} />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Excluir Venda?</h2>
+            <p className="text-slate-500 mb-8">O lançamento será removido permanentemente.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSaleToDelete(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDeleteSale(saleToDelete)}
+                className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-rose-600 text-white hover:bg-rose-700"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 backdrop-blur-xl border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
