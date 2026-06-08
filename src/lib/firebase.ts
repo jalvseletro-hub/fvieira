@@ -90,7 +90,7 @@ export const db = { __isShim: true };
 type CollectionRef = { __kind: "collection"; name: CollectionName };
 type DocRef = { __kind: "doc"; name: CollectionName; id: string };
 
-type CollectionName = "vehicles" | "records" | "settings" | "debts" | "employees";
+type CollectionName = "vehicles" | "records" | "settings" | "debts" | "employees" | "sales";
 
 export function collection(_db: any, name: CollectionName): CollectionRef {
   return { __kind: "collection", name };
