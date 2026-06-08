@@ -277,6 +277,11 @@ export async function setDoc(ref: DocRef, data: any) {
       .from("employees" as any)
       .upsert(employeeToRow({ ...data, id: ref.id }, userId));
     if (error) throw error;
+  } else if (ref.name === "sales") {
+    const { error } = await supabase
+      .from("sales" as any)
+      .upsert(saleToRow({ ...data, id: ref.id }, userId));
+    if (error) throw error;
   }
 }
 
