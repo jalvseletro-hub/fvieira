@@ -90,7 +90,7 @@ export const db = { __isShim: true };
 type CollectionRef = { __kind: "collection"; name: CollectionName };
 type DocRef = { __kind: "doc"; name: CollectionName; id: string };
 
-type CollectionName = "vehicles" | "records" | "settings" | "debts" | "employees";
+type CollectionName = "vehicles" | "records" | "settings" | "debts" | "employees" | "sales";
 
 export function collection(_db: any, name: CollectionName): CollectionRef {
   return { __kind: "collection", name };
@@ -223,6 +223,26 @@ function rowToEmployee(r: any) {
   };
 }
 
+function saleToRow(s: any, userId: string) {
+  return {
+    id: s.id,
+    user_id: userId,
+    sale_date: s.date,
+    total_value: Number(s.totalValue) || 0,
+    notes: s.notes ?? null,
+  };
+}
+function rowToSale(r: any) {
+  return {
+    id: r.id,
+    date: r.sale_date,
+    totalValue: Number(r.total_value) || 0,
+    notes: r.notes ?? undefined,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
 function uid(): string {
   if (!_currentUser) throw new Error("Not authenticated");
   return _currentUser.id;
@@ -257,6 +277,11 @@ export async function setDoc(ref: DocRef, data: any) {
       .from("employees" as any)
       .upsert(employeeToRow({ ...data, id: ref.id }, userId));
     if (error) throw error;
+  } else if (ref.name === "sales") {
+    const { error } = await supabase
+      .from("sales" as any)
+      .upsert(saleToRow({ ...data, id: ref.id }, userId));
+    if (error) throw error;
   }
 }
 
@@ -272,6 +297,9 @@ export async function deleteDoc(ref: DocRef) {
     if (error) throw error;
   } else if (ref.name === "employees") {
     const { error } = await supabase.from("employees" as any).delete().eq("id", ref.id);
+    if (error) throw error;
+  } else if (ref.name === "sales") {
+    const { error } = await supabase.from("sales" as any).delete().eq("id", ref.id);
     if (error) throw error;
   }
 }
@@ -337,6 +365,12 @@ export async function getDocs(ref: CollectionRef) {
       const e = rowToEmployee(r);
       docs.push({ id: e.id, data: () => e });
     });
+  } else if (ref.name === "sales") {
+    const { data } = await supabase.from("sales" as any).select("*").order("sale_date", { ascending: false });
+    (data ?? []).forEach((r: any) => {
+      const s = rowToSale(r);
+      docs.push({ id: s.id, data: () => s });
+    });
   }
   return { docs };
 }
@@ -375,6 +409,7 @@ export function onSnapshot(
     settings: "company_settings",
     debts: "debts",
     employees: "employees",
+    sales: "sales",
   };
   const table = tableMap[ref.__kind === "collection" ? ref.name : ref.name];
   const channel = supabase

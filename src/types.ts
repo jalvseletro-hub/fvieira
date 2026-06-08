@@ -77,6 +77,16 @@ export interface Employee {
   updatedAt: string;
 }
 
+export interface Sale {
+  id: string;
+  date: string; // ISO yyyy-mm-dd (data da venda)
+  totalValue: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
 export interface ClientInfo {
   name: string;
   cnpj?: string;
