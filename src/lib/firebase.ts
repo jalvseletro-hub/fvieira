@@ -223,6 +223,26 @@ function rowToEmployee(r: any) {
   };
 }
 
+function saleToRow(s: any, userId: string) {
+  return {
+    id: s.id,
+    user_id: userId,
+    sale_date: s.date,
+    total_value: Number(s.totalValue) || 0,
+    notes: s.notes ?? null,
+  };
+}
+function rowToSale(r: any) {
+  return {
+    id: r.id,
+    date: r.sale_date,
+    totalValue: Number(r.total_value) || 0,
+    notes: r.notes ?? undefined,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
 function uid(): string {
   if (!_currentUser) throw new Error("Not authenticated");
   return _currentUser.id;
