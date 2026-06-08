@@ -25,7 +25,9 @@ import {
   Wallet,
   Minus,
   CheckCircle2,
-  Users
+  Users,
+  ShoppingCart,
+  BarChart3
 } from 'lucide-react';
 import {
   DropdownMenu,
