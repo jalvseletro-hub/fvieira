@@ -3030,7 +3030,7 @@ export default function App() {
           const monthlyData = monthNames.map((label, idx) => {
             const yearRecords = records.filter(r => r.year === currentYear && r.month === idx);
             const vehicleRevenue = yearRecords.reduce((acc, r) => acc + calculateRevenue(r), 0);
-            const vehicleCosts = yearRecords.reduce((acc, r) => acc + calculateCosts(r), 0);
+            const vehicleCosts = yearRecords.reduce((acc, r) => acc + calculateCosts(r).total, 0);
             const salesRevenue = sales
               .filter(s => {
                 const d = parseISO(s.date);
