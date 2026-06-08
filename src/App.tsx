@@ -2930,6 +2930,272 @@ export default function App() {
             )}
           </div>
         )}
+
+        {activeTab === 'sales' && isAdmin && (() => {
+          const sortedSales = [...sales].sort((a, b) => b.date.localeCompare(a.date));
+          const today = new Date().toISOString().slice(0, 10);
+          const thisMonth = today.slice(0, 7);
+          const thisYear = today.slice(0, 4);
+          const todayTotal = sortedSales.filter(s => s.date === today).reduce((acc, s) => acc + s.totalValue, 0);
+          const monthTotal = sortedSales.filter(s => s.date.startsWith(thisMonth)).reduce((acc, s) => acc + s.totalValue, 0);
+          const yearTotal = sortedSales.filter(s => s.date.startsWith(thisYear)).reduce((acc, s) => acc + s.totalValue, 0);
+          return (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <header className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Vendas da Loja</h2>
+                  <p className="text-slate-500">Registre o total vendido por dia em F.VIEIRA.</p>
+                </div>
+                <button
+                  onClick={() => { setEditingSaleId(null); setShowSaleModal(true); }}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+                >
+                  <Plus size={18} /> Nova Venda
+                </button>
+              </header>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-white rounded-2xl border border-slate-100 p-4">
+                  <p className="text-[10px] uppercase font-bold text-slate-400">Hoje</p>
+                  <p className="text-lg font-bold text-slate-900">R$ {todayTotal.toFixed(2)}</p>
+                </div>
+                <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-4">
+                  <p className="text-[10px] uppercase font-bold text-emerald-500">Mês</p>
+                  <p className="text-lg font-bold text-emerald-700">R$ {monthTotal.toFixed(2)}</p>
+                </div>
+                <div className="bg-indigo-50 rounded-2xl border border-indigo-100 p-4">
+                  <p className="text-[10px] uppercase font-bold text-indigo-500">Ano</p>
+                  <p className="text-lg font-bold text-indigo-700">R$ {yearTotal.toFixed(2)}</p>
+                </div>
+              </div>
+
+              {sortedSales.length === 0 ? (
+                <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-12 text-center">
+                  <ShoppingCart size={40} className="mx-auto text-slate-300 mb-3" />
+                  <p className="text-slate-500">Nenhuma venda registrada ainda.</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                      <tr>
+                        <th className="text-left px-4 py-3 font-bold">Data</th>
+                        <th className="text-right px-4 py-3 font-bold">Valor</th>
+                        <th className="text-left px-4 py-3 font-bold hidden sm:table-cell">Obs.</th>
+                        <th className="px-4 py-3"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedSales.map(s => (
+                        <tr key={s.id} className="border-t border-slate-100">
+                          <td className="px-4 py-3 font-medium text-slate-700">
+                            {format(parseISO(s.date), 'dd/MM/yyyy', { locale: ptBR })}
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold text-emerald-700">R$ {s.totalValue.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-slate-500 italic hidden sm:table-cell">{s.notes || '—'}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => { setEditingSaleId(s.id); setShowSaleModal(true); }}
+                                className="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center"
+                                title="Editar"
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                onClick={() => setSaleToDelete(s.id)}
+                                className="w-8 h-8 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 flex items-center justify-center"
+                                title="Excluir"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {activeTab === 'overview' && isAdmin && (() => {
+          const now = new Date();
+          const currentYear = now.getFullYear();
+          const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+          // Agrega receitas e custos dos veículos por mês do ano atual
+          const monthlyData = monthNames.map((label, idx) => {
+            const yearRecords = records.filter(r => r.year === currentYear && r.month === idx);
+            const vehicleRevenue = yearRecords.reduce((acc, r) => acc + calculateRevenue(r), 0);
+            const vehicleCosts = yearRecords.reduce((acc, r) => acc + calculateCosts(r), 0);
+            const salesRevenue = sales
+              .filter(s => {
+                const d = parseISO(s.date);
+                return d.getFullYear() === currentYear && d.getMonth() === idx;
+              })
+              .reduce((acc, s) => acc + s.totalValue, 0);
+            const debtInstallments = debts.reduce((acc, d) => acc + (d.installmentValue || 0), 0);
+            const payroll = employees.filter(e => e.active !== false).reduce((acc, e) => acc + (e.salary || 0), 0);
+            const totalRevenue = vehicleRevenue + salesRevenue;
+            const totalCosts = vehicleCosts + debtInstallments + payroll;
+            const profit = totalRevenue - totalCosts;
+            return {
+              month: label,
+              receita: Number(totalRevenue.toFixed(2)),
+              custos: Number(totalCosts.toFixed(2)),
+              lucro: Number(profit.toFixed(2)),
+              vehicleRevenue,
+              salesRevenue,
+              vehicleCosts,
+              debtInstallments,
+              payroll,
+            };
+          });
+
+          const yearRevenue = monthlyData.reduce((a, m) => a + m.receita, 0);
+          const yearCosts = monthlyData.reduce((a, m) => a + m.custos, 0);
+          const yearProfit = yearRevenue - yearCosts;
+
+          const yearVehicleRevenue = monthlyData.reduce((a, m) => a + m.vehicleRevenue, 0);
+          const yearSalesRevenue = monthlyData.reduce((a, m) => a + m.salesRevenue, 0);
+          const yearVehicleCosts = monthlyData.reduce((a, m) => a + m.vehicleCosts, 0);
+          const monthlyDebt = debts.reduce((a, d) => a + (d.installmentValue || 0), 0);
+          const monthlyPayroll = employees.filter(e => e.active !== false).reduce((a, e) => a + (e.salary || 0), 0);
+
+          const pieData = [
+            { name: 'Veículos', value: Math.round(yearVehicleRevenue), color: '#6366f1' },
+            { name: 'Vendas Loja', value: Math.round(yearSalesRevenue), color: '#10b981' },
+          ].filter(p => p.value > 0);
+
+          const costPieData = [
+            { name: 'Veículos', value: Math.round(yearVehicleCosts), color: '#f97316' },
+            { name: 'Dívidas (mês)', value: Math.round(monthlyDebt * 12), color: '#ef4444' },
+            { name: 'Folha (ano)', value: Math.round(monthlyPayroll * 12), color: '#8b5cf6' },
+          ].filter(p => p.value > 0);
+
+          return (
+            <div className="max-w-5xl mx-auto space-y-6">
+              <header>
+                <h2 className="text-2xl font-bold text-slate-900">Resumo Geral — {currentYear}</h2>
+                <p className="text-slate-500">Contabilidade consolidada: receitas, custos e lucro do ano.</p>
+              </header>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-emerald-50 rounded-3xl border border-emerald-100 p-5">
+                  <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                    <TrendingUp size={16} /><span className="text-xs uppercase font-bold">Receita Ano</span>
+                  </div>
+                  <p className="text-2xl font-bold text-emerald-700">R$ {yearRevenue.toFixed(2)}</p>
+                  <p className="text-[11px] text-emerald-600 mt-1">
+                    Veículos R$ {yearVehicleRevenue.toFixed(2)} + Loja R$ {yearSalesRevenue.toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-rose-50 rounded-3xl border border-rose-100 p-5">
+                  <div className="flex items-center gap-2 text-rose-600 mb-1">
+                    <TrendingDown size={16} /><span className="text-xs uppercase font-bold">Custos Ano</span>
+                  </div>
+                  <p className="text-2xl font-bold text-rose-700">R$ {yearCosts.toFixed(2)}</p>
+                  <p className="text-[11px] text-rose-600 mt-1">
+                    Inclui dívidas e folha (mensal × meses)
+                  </p>
+                </div>
+                <div className={cn(
+                  "rounded-3xl border p-5",
+                  yearProfit >= 0 ? "bg-indigo-50 border-indigo-100" : "bg-amber-50 border-amber-100"
+                )}>
+                  <div className={cn(
+                    "flex items-center gap-2 mb-1",
+                    yearProfit >= 0 ? "text-indigo-600" : "text-amber-600"
+                  )}>
+                    <DollarSign size={16} /><span className="text-xs uppercase font-bold">Lucro Líquido</span>
+                  </div>
+                  <p className={cn(
+                    "text-2xl font-bold",
+                    yearProfit >= 0 ? "text-indigo-700" : "text-amber-700"
+                  )}>R$ {yearProfit.toFixed(2)}</p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Margem: {yearRevenue > 0 ? ((yearProfit / yearRevenue) * 100).toFixed(1) : '0'}%
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+                <h3 className="font-bold text-slate-800 mb-4">Receita × Custos × Lucro (mês a mês)</h3>
+                <div className="w-full h-80">
+                  <ResponsiveContainer>
+                    <BarChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                      <Tooltip
+                        formatter={(value: any) => `R$ ${Number(value).toFixed(2)}`}
+                        contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0' }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="receita" name="Receita" fill="#10b981" radius={[6,6,0,0]} />
+                      <Bar dataKey="custos" name="Custos" fill="#ef4444" radius={[6,6,0,0]} />
+                      <Bar dataKey="lucro" name="Lucro" fill="#6366f1" radius={[6,6,0,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+                  <h3 className="font-bold text-slate-800 mb-3">Origem da Receita (ano)</h3>
+                  {pieData.length === 0 ? (
+                    <p className="text-sm text-slate-400 py-10 text-center">Sem dados.</p>
+                  ) : (
+                    <div className="w-full h-64">
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={90} label={(e:any) => `${e.name}: R$${e.value}`}>
+                            {pieData.map((p, i) => <Cell key={i} fill={p.color} />)}
+                          </Pie>
+                          <Tooltip formatter={(v: any) => `R$ ${Number(v).toFixed(2)}`} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+                  <h3 className="font-bold text-slate-800 mb-3">Composição dos Custos (ano)</h3>
+                  {costPieData.length === 0 ? (
+                    <p className="text-sm text-slate-400 py-10 text-center">Sem dados.</p>
+                  ) : (
+                    <div className="w-full h-64">
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie data={costPieData} dataKey="value" nameKey="name" outerRadius={90} label={(e:any) => `${e.name}: R$${e.value}`}>
+                            {costPieData.map((p, i) => <Cell key={i} fill={p.color} />)}
+                          </Pie>
+                          <Tooltip formatter={(v: any) => `R$ ${Number(v).toFixed(2)}`} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+                <h3 className="font-bold text-slate-800 mb-3">Compromissos fixos mensais</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
+                    <span className="text-slate-600">Dívidas (parcelas/mês)</span>
+                    <span className="font-bold text-rose-600">R$ {monthlyDebt.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
+                    <span className="text-slate-600">Folha de pagamento</span>
+                    <span className="font-bold text-violet-600">R$ {monthlyPayroll.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </main>
 
 
