@@ -5019,3 +5019,71 @@ function EmployeeModal({ employee, onClose, onSubmit }: {
     </div>
   );
 }
+
+function SaleModal({ sale, onClose, onSubmit }: {
+  sale?: Sale;
+  onClose: () => void;
+  onSubmit: (data: Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>) => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(sale?.date ?? today);
+  const [totalValue, setTotalValue] = useState<string>(sale?.totalValue?.toString() ?? '');
+  const [notes, setNotes] = useState(sale?.notes ?? '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = parseFloat(totalValue);
+    if (!date || !isFinite(v) || v < 0) return;
+    onSubmit({
+      date,
+      totalValue: v,
+      notes: notes.trim() || undefined,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl">
+        <form onSubmit={handleSubmit} className="p-8 space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">{sale ? 'Editar Venda' : 'Nova Venda'}</h2>
+            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+              <Plus className="rotate-45" size={22} />
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Data</label>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Total vendido (R$)</label>
+            <input type="number" step="0.01" min="0" value={totalValue}
+              onChange={(e) => setTotalValue(e.target.value)} required placeholder="0,00"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400 text-lg font-bold" />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-500">Observações</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+              placeholder="Opcional"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200">
+              Cancelar
+            </button>
+            <button type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700">
+              {sale ? 'Salvar' : 'Cadastrar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
