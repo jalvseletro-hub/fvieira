@@ -187,6 +187,51 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          active: boolean
+          cost_price: number
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          notes: string | null
+          sale_price: number
+          stock: number
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          cost_price?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          notes?: string | null
+          sale_price?: number
+          stock?: number
+          unit?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          cost_price?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          notes?: string | null
+          sale_price?: number
+          stock?: number
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -208,11 +253,67 @@ export type Database = {
         }
         Relationships: []
       }
-      sales: {
+      sale_items: {
         Row: {
           created_at: string
           id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          sale_id: string
+          unit_cost: number
+          unit_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          sale_id: string
+          unit_cost?: number
+          unit_price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          sale_id?: string
+          unit_cost?: number
+          unit_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          id: string
           notes: string | null
+          payment_method: string
           sale_date: string
           total_value: number
           updated_at: string
@@ -220,8 +321,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_name?: string | null
           id?: string
           notes?: string | null
+          payment_method?: string
           sale_date: string
           total_value?: number
           updated_at?: string
@@ -229,8 +332,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_name?: string | null
           id?: string
           notes?: string | null
+          payment_method?: string
           sale_date?: string
           total_value?: number
           updated_at?: string

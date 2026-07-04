@@ -77,10 +77,40 @@ export interface Employee {
   updatedAt: string;
 }
 
+export type PaymentMethod = 'dinheiro' | 'pix' | 'cartao' | 'fiado';
+
+export interface SaleItem {
+  id: string;
+  saleId: string;
+  productId?: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  unitCost: number;
+}
+
 export interface Sale {
   id: string;
   date: string; // ISO yyyy-mm-dd (data da venda)
   totalValue: number;
+  notes?: string;
+  paymentMethod: PaymentMethod;
+  customerName?: string;
+  items?: SaleItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  imageUrl?: string;   // storage path (e.g. "<uid>/xxx.jpg")
+  imageDisplayUrl?: string; // resolved signed URL (client-side only)
+  costPrice: number;
+  salePrice: number;
+  stock: number;
+  unit: string; // un, kg, saco, m, L
+  active: boolean;
   notes?: string;
   createdAt: string;
   updatedAt: string;

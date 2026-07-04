@@ -230,6 +230,8 @@ function saleToRow(s: any, userId: string) {
     sale_date: s.date,
     total_value: Number(s.totalValue) || 0,
     notes: s.notes ?? null,
+    payment_method: s.paymentMethod ?? 'dinheiro',
+    customer_name: s.customerName ?? null,
   };
 }
 function rowToSale(r: any) {
@@ -238,6 +240,8 @@ function rowToSale(r: any) {
     date: r.sale_date,
     totalValue: Number(r.total_value) || 0,
     notes: r.notes ?? undefined,
+    paymentMethod: (r.payment_method ?? 'dinheiro') as any,
+    customerName: r.customer_name ?? undefined,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };

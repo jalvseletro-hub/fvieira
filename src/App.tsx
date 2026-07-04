@@ -75,8 +75,10 @@ import {
   CompanySettings,
   Debt,
   Employee,
-  Sale
+  Sale,
+  SaleItem
 } from './types';
+import PDVModule from './components/PDVModule';
 import { 
   auth, 
   db, 
@@ -221,6 +223,7 @@ export default function App() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [dataLoaded, setDataLoaded] = useState({
     vehicles: false,
     records: false,
@@ -272,9 +275,8 @@ export default function App() {
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
-  const [showSaleModal, setShowSaleModal] = useState(false);
-  const [editingSaleId, setEditingSaleId] = useState<string | null>(null);
-  const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
+
+
 
 
   // Auto-select latest record for selected vehicle if none selected
@@ -516,33 +518,8 @@ export default function App() {
     }
   };
 
-  const handleSaveSale = async (data: Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>, id?: string) => {
-    try {
-      const saleId = id || crypto.randomUUID();
-      const existing = id ? sales.find(s => s.id === id) : undefined;
-      const now = new Date().toISOString();
-      const sale: Sale = {
-        ...data,
-        id: saleId,
-        createdAt: existing?.createdAt || now,
-        updatedAt: now,
-      };
-      await setDoc(doc(db, 'sales', saleId), cleanObject(sale));
-      setShowSaleModal(false);
-      setEditingSaleId(null);
-    } catch (e) {
-      handleFirestoreError(e, OperationType.WRITE, `sales/${id || 'new'}`);
-    }
-  };
 
-  const handleDeleteSale = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'sales', id));
-      setSaleToDelete(null);
-    } catch (e) {
-      handleFirestoreError(e, OperationType.DELETE, `sales/${id}`);
-    }
-  };
+
 
   const handleAdminAccess = () => {
     const u = adminUserInput.trim();
@@ -2931,95 +2908,9 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'sales' && isAdmin && (() => {
-          const sortedSales = [...sales].sort((a, b) => b.date.localeCompare(a.date));
-          const today = new Date().toISOString().slice(0, 10);
-          const thisMonth = today.slice(0, 7);
-          const thisYear = today.slice(0, 4);
-          const todayTotal = sortedSales.filter(s => s.date === today).reduce((acc, s) => acc + s.totalValue, 0);
-          const monthTotal = sortedSales.filter(s => s.date.startsWith(thisMonth)).reduce((acc, s) => acc + s.totalValue, 0);
-          const yearTotal = sortedSales.filter(s => s.date.startsWith(thisYear)).reduce((acc, s) => acc + s.totalValue, 0);
-          return (
-            <div className="max-w-4xl mx-auto space-y-6">
-              <header className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Vendas da Loja</h2>
-                  <p className="text-slate-500">Registre o total vendido por dia em F.VIEIRA.</p>
-                </div>
-                <button
-                  onClick={() => { setEditingSaleId(null); setShowSaleModal(true); }}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
-                >
-                  <Plus size={18} /> Nova Venda
-                </button>
-              </header>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white rounded-2xl border border-slate-100 p-4">
-                  <p className="text-[10px] uppercase font-bold text-slate-400">Hoje</p>
-                  <p className="text-lg font-bold text-slate-900">R$ {todayTotal.toFixed(2)}</p>
-                </div>
-                <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-4">
-                  <p className="text-[10px] uppercase font-bold text-emerald-500">Mês</p>
-                  <p className="text-lg font-bold text-emerald-700">R$ {monthTotal.toFixed(2)}</p>
-                </div>
-                <div className="bg-indigo-50 rounded-2xl border border-indigo-100 p-4">
-                  <p className="text-[10px] uppercase font-bold text-indigo-500">Ano</p>
-                  <p className="text-lg font-bold text-indigo-700">R$ {yearTotal.toFixed(2)}</p>
-                </div>
-              </div>
-
-              {sortedSales.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-12 text-center">
-                  <ShoppingCart size={40} className="mx-auto text-slate-300 mb-3" />
-                  <p className="text-slate-500">Nenhuma venda registrada ainda.</p>
-                </div>
-              ) : (
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                      <tr>
-                        <th className="text-left px-4 py-3 font-bold">Data</th>
-                        <th className="text-right px-4 py-3 font-bold">Valor</th>
-                        <th className="text-left px-4 py-3 font-bold hidden sm:table-cell">Obs.</th>
-                        <th className="px-4 py-3"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedSales.map(s => (
-                        <tr key={s.id} className="border-t border-slate-100">
-                          <td className="px-4 py-3 font-medium text-slate-700">
-                            {format(parseISO(s.date), 'dd/MM/yyyy', { locale: ptBR })}
-                          </td>
-                          <td className="px-4 py-3 text-right font-bold text-emerald-700">R$ {s.totalValue.toFixed(2)}</td>
-                          <td className="px-4 py-3 text-slate-500 italic hidden sm:table-cell">{s.notes || '—'}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => { setEditingSaleId(s.id); setShowSaleModal(true); }}
-                                className="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center"
-                                title="Editar"
-                              >
-                                <Pencil size={14} />
-                              </button>
-                              <button
-                                onClick={() => setSaleToDelete(s.id)}
-                                className="w-8 h-8 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 flex items-center justify-center"
-                                title="Excluir"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          );
-        })()}
+        {activeTab === 'sales' && isAdmin && (
+          <PDVModule sales={sales} onSaleItemsChange={setSaleItems} />
+        )}
 
         {activeTab === 'overview' && isAdmin && (() => {
           const now = new Date();
@@ -3408,39 +3299,8 @@ export default function App() {
         </div>
       )}
 
-      {showSaleModal && (
-        <SaleModal
-          sale={editingSaleId ? sales.find(s => s.id === editingSaleId) : undefined}
-          onClose={() => { setShowSaleModal(false); setEditingSaleId(null); }}
-          onSubmit={(data) => handleSaveSale(data, editingSaleId || undefined)}
-        />
-      )}
 
-      {saleToDelete && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 text-center">
-            <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={32} />
-            </div>
-            <h2 className="text-xl font-bold mb-2">Excluir Venda?</h2>
-            <p className="text-slate-500 mb-8">O lançamento será removido permanentemente.</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setSaleToDelete(null)}
-                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleDeleteSale(saleToDelete)}
-                className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-rose-600 text-white hover:bg-rose-700"
-              >
-                Excluir
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
 
 
@@ -5020,70 +4880,3 @@ function EmployeeModal({ employee, onClose, onSubmit }: {
   );
 }
 
-function SaleModal({ sale, onClose, onSubmit }: {
-  sale?: Sale;
-  onClose: () => void;
-  onSubmit: (data: Omit<Sale, 'id' | 'createdAt' | 'updatedAt'>) => void;
-}) {
-  const today = new Date().toISOString().slice(0, 10);
-  const [date, setDate] = useState(sale?.date ?? today);
-  const [totalValue, setTotalValue] = useState<string>(sale?.totalValue?.toString() ?? '');
-  const [notes, setNotes] = useState(sale?.notes ?? '');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const v = parseFloat(totalValue);
-    if (!date || !isFinite(v) || v < 0) return;
-    onSubmit({
-      date,
-      totalValue: v,
-      notes: notes.trim() || undefined,
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl">
-        <form onSubmit={handleSubmit} className="p-8 space-y-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">{sale ? 'Editar Venda' : 'Nova Venda'}</h2>
-            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
-              <Plus className="rotate-45" size={22} />
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-slate-500">Data</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-slate-500">Total vendido (R$)</label>
-            <input type="number" step="0.01" min="0" value={totalValue}
-              onChange={(e) => setTotalValue(e.target.value)} required placeholder="0,00"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400 text-lg font-bold" />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-slate-500">Observações</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
-              placeholder="Opcional"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400" />
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-50 border border-slate-200">
-              Cancelar
-            </button>
-            <button type="submit"
-              className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700">
-              {sale ? 'Salvar' : 'Cadastrar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
