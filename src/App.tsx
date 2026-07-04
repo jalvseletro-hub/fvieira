@@ -223,6 +223,7 @@ export default function App() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [dataLoaded, setDataLoaded] = useState({
     vehicles: false,
     records: false,
