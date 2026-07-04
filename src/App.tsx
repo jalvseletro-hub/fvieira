@@ -75,8 +75,10 @@ import {
   CompanySettings,
   Debt,
   Employee,
-  Sale
+  Sale,
+  SaleItem
 } from './types';
+import PDVModule from './components/PDVModule';
 import { 
   auth, 
   db, 
