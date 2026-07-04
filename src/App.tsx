@@ -275,9 +275,8 @@ export default function App() {
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
-  const [showSaleModal, setShowSaleModal] = useState(false);
-  const [editingSaleId, setEditingSaleId] = useState<string | null>(null);
-  const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
+
+
 
 
   // Auto-select latest record for selected vehicle if none selected
