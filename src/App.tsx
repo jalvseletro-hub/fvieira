@@ -242,6 +242,8 @@ export default function App() {
   const isDataReady = forceReady || (dataLoaded.vehicles && dataLoaded.records && dataLoaded.settings);
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'vehicles' | 'settings' | 'debts' | 'employees' | 'sales' | 'overview'>('dashboard');
+  const [overviewPeriod, setOverviewPeriod] = useState<'semana' | 'mes' | 'ano'>('ano');
+
   const [userRole, setUserRole] = useState<'none' | 'admin' | 'driver'>(() => {
     if (typeof window === 'undefined') return 'none';
     const stored = localStorage.getItem('ms_user_role');
@@ -2909,7 +2911,7 @@ export default function App() {
         )}
 
         {activeTab === 'sales' && isAdmin && (
-          <PDVModule sales={sales} onSaleItemsChange={setSaleItems} />
+          <PDVModule sales={sales} settings={settings} onSaleItemsChange={setSaleItems} />
         )}
 
         {activeTab === 'overview' && isAdmin && (() => {
@@ -2967,51 +2969,82 @@ export default function App() {
             { name: 'Folha (ano)', value: Math.round(monthlyPayroll * 12), color: '#8b5cf6' },
           ].filter(p => p.value > 0);
 
+          // Filtro de período (semana/mês/ano) para os cards de resumo
+          const period = (overviewPeriod || 'ano') as 'semana' | 'mes' | 'ano';
+          const startOfPeriod = new Date();
+          if (period === 'semana') startOfPeriod.setDate(startOfPeriod.getDate() - 6);
+          else if (period === 'mes') startOfPeriod.setDate(1);
+          else startOfPeriod.setMonth(0, 1);
+          startOfPeriod.setHours(0, 0, 0, 0);
+
+          const periodVehicleRevenue = records.reduce((acc, r) => {
+            return acc + (r.services || []).filter(sv => {
+              const d = parseISO(sv.date); return d >= startOfPeriod && d <= now;
+            }).length ? acc + calculateRevenue(r) * 0 + (function(){
+              // recalcula receita apenas dos serviços no período
+              const filtered = { ...r, services: (r.services || []).filter(sv => { const d = parseISO(sv.date); return d >= startOfPeriod && d <= now; }) } as MonthRecord;
+              return calculateRevenue(filtered);
+            })() : acc;
+          }, 0);
+          const periodVehicleCosts = period === 'ano'
+            ? yearVehicleCosts
+            : records.filter(r => r.year === now.getFullYear() && r.month === now.getMonth()).reduce((a, r) => a + calculateCosts(r).total, 0);
+
+          const periodSalesRevenue = sales.filter(s => { const d = parseISO(s.date); return d >= startOfPeriod && d <= now; }).reduce((a, s) => a + s.totalValue, 0);
+          const periodMonths = period === 'ano' ? 12 : period === 'mes' ? 1 : (7/30);
+          const periodDebt = monthlyDebt * periodMonths;
+          const periodPayroll = monthlyPayroll * periodMonths;
+          const periodRevenue = periodVehicleRevenue + periodSalesRevenue;
+          const periodCosts = periodVehicleCosts + periodDebt + periodPayroll;
+          const periodProfit = periodRevenue - periodCosts;
+          const periodLabel = period === 'semana' ? '7 dias' : period === 'mes' ? 'Mês atual' : `Ano ${currentYear}`;
+
           return (
             <div className="max-w-5xl mx-auto space-y-6">
-              <header>
-                <h2 className="text-2xl font-bold text-slate-900">Resumo Geral — {currentYear}</h2>
-                <p className="text-slate-500">Contabilidade consolidada: receitas, custos e lucro do ano.</p>
+              <header className="flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Resumo Geral — {periodLabel}</h2>
+                  <p className="text-slate-500">Contabilidade consolidada: receitas, custos e lucro.</p>
+                </div>
+                <div className="flex gap-1 bg-white rounded-xl border border-slate-100 p-1">
+                  {(['semana','mes','ano'] as const).map(p => (
+                    <button key={p} onClick={() => setOverviewPeriod(p)}
+                      className={cn("px-3 py-1.5 rounded-lg text-xs font-bold capitalize",
+                        period === p ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50')}>
+                      {p === 'mes' ? 'Mês' : p === 'semana' ? 'Semana' : 'Ano'}
+                    </button>
+                  ))}
+                </div>
               </header>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-emerald-50 rounded-3xl border border-emerald-100 p-5">
                   <div className="flex items-center gap-2 text-emerald-600 mb-1">
-                    <TrendingUp size={16} /><span className="text-xs uppercase font-bold">Receita Ano</span>
+                    <TrendingUp size={16} /><span className="text-xs uppercase font-bold">Receita ({periodLabel})</span>
                   </div>
-                  <p className="text-2xl font-bold text-emerald-700">R$ {yearRevenue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-emerald-700">R$ {periodRevenue.toFixed(2)}</p>
                   <p className="text-[11px] text-emerald-600 mt-1">
-                    Veículos R$ {yearVehicleRevenue.toFixed(2)} + Loja R$ {yearSalesRevenue.toFixed(2)}
+                    Veículos R$ {periodVehicleRevenue.toFixed(2)} + Loja R$ {periodSalesRevenue.toFixed(2)}
                   </p>
                 </div>
                 <div className="bg-rose-50 rounded-3xl border border-rose-100 p-5">
                   <div className="flex items-center gap-2 text-rose-600 mb-1">
-                    <TrendingDown size={16} /><span className="text-xs uppercase font-bold">Custos Ano</span>
+                    <TrendingDown size={16} /><span className="text-xs uppercase font-bold">Custos ({periodLabel})</span>
                   </div>
-                  <p className="text-2xl font-bold text-rose-700">R$ {yearCosts.toFixed(2)}</p>
-                  <p className="text-[11px] text-rose-600 mt-1">
-                    Inclui dívidas e folha (mensal × meses)
-                  </p>
+                  <p className="text-2xl font-bold text-rose-700">R$ {periodCosts.toFixed(2)}</p>
+                  <p className="text-[11px] text-rose-600 mt-1">Inclui dívidas e folha proporcional</p>
                 </div>
-                <div className={cn(
-                  "rounded-3xl border p-5",
-                  yearProfit >= 0 ? "bg-indigo-50 border-indigo-100" : "bg-amber-50 border-amber-100"
-                )}>
-                  <div className={cn(
-                    "flex items-center gap-2 mb-1",
-                    yearProfit >= 0 ? "text-indigo-600" : "text-amber-600"
-                  )}>
+                <div className={cn("rounded-3xl border p-5", periodProfit >= 0 ? "bg-indigo-50 border-indigo-100" : "bg-amber-50 border-amber-100")}>
+                  <div className={cn("flex items-center gap-2 mb-1", periodProfit >= 0 ? "text-indigo-600" : "text-amber-600")}>
                     <DollarSign size={16} /><span className="text-xs uppercase font-bold">Lucro Líquido</span>
                   </div>
-                  <p className={cn(
-                    "text-2xl font-bold",
-                    yearProfit >= 0 ? "text-indigo-700" : "text-amber-700"
-                  )}>R$ {yearProfit.toFixed(2)}</p>
+                  <p className={cn("text-2xl font-bold", periodProfit >= 0 ? "text-indigo-700" : "text-amber-700")}>R$ {periodProfit.toFixed(2)}</p>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Margem: {yearRevenue > 0 ? ((yearProfit / yearRevenue) * 100).toFixed(1) : '0'}%
+                    Margem: {periodRevenue > 0 ? ((periodProfit / periodRevenue) * 100).toFixed(1) : '0'}%
                   </p>
                 </div>
               </div>
+
 
               <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
                 <h3 className="font-bold text-slate-800 mb-4">Receita × Custos × Lucro (mês a mês)</h3>
