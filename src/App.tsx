@@ -2986,9 +2986,10 @@ export default function App() {
               return calculateRevenue(filtered);
             })() : acc;
           }, 0);
-          const periodVehicleCosts = (period === 'ano')
+          const periodVehicleCosts = period === 'ano'
             ? yearVehicleCosts
-            : records.filter(r => r.year === now.getFullYear() && (period === 'ano' || r.month === now.getMonth())).reduce((a, r) => a + calculateCosts(r).total, 0);
+            : records.filter(r => r.year === now.getFullYear() && r.month === now.getMonth()).reduce((a, r) => a + calculateCosts(r).total, 0);
+
           const periodSalesRevenue = sales.filter(s => { const d = parseISO(s.date); return d >= startOfPeriod && d <= now; }).reduce((a, s) => a + s.totalValue, 0);
           const periodMonths = period === 'ano' ? 12 : period === 'mes' ? 1 : (7/30);
           const periodDebt = monthlyDebt * periodMonths;
