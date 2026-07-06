@@ -101,6 +101,35 @@ export interface Sale {
   updatedAt: string;
 }
 
+export type QuoteStatus = 'aberto' | 'aprovado' | 'cancelado';
+
+export interface QuoteItem {
+  id?: string;
+  quoteId?: string;
+  productId?: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  unitCost: number;
+}
+
+export interface Quote {
+  id: string;
+  quoteNumber: number;
+  date: string;       // ISO yyyy-mm-dd
+  validUntil?: string;
+  customerName?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  status: QuoteStatus;
+  totalValue: number;
+  notes?: string;
+  convertedSaleId?: string;
+  items?: QuoteItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Product {
   id: string;
   name: string;
