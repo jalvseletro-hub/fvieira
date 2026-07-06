@@ -2909,7 +2909,7 @@ export default function App() {
         )}
 
         {activeTab === 'sales' && isAdmin && (
-          <PDVModule sales={sales} onSaleItemsChange={setSaleItems} />
+          <PDVModule sales={sales} settings={settings} onSaleItemsChange={setSaleItems} />
         )}
 
         {activeTab === 'overview' && isAdmin && (() => {
